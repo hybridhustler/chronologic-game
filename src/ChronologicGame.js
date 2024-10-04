@@ -1,7 +1,46 @@
 import React, { useState, useEffect } from 'react';
-import { QuestionMarkCircleIcon, XMarkIcon, CheckCircleIcon, ExclamationCircleIcon, ShareIcon } from '@heroicons/react/24/outline';
+import { QuestionMarkCircleIcon, XMarkIcon, WrenchIcon, CheckCircleIcon, ExclamationCircleIcon, ShareIcon } from '@heroicons/react/24/outline';
 import './ChronologicGame.css';
 import dailyPuzzle from './dailyPuzzle';
+
+const MenuOverlay = ({ isOpen, onClose }) => {
+  if (!isOpen) return null;
+
+  const email = 'hybridhustlerarmy@gmail.com';
+  const links = [
+    { name: 'Contact', subject: 'Contact from Chronologic Game' },
+    { name: 'Feedback', subject: 'Feedback for Chronologic Game' },
+    { name: 'Report a Bug', subject: 'Bug Report for Chronologic Game' },
+  ];
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+      <div className="bg-white rounded-lg max-w-md w-full p-6 relative">
+        <button 
+          onClick={onClose}
+          className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+        >
+          <XMarkIcon className="h-6 w-6" />
+        </button>
+        
+        <h2 className="text-2xl font-bold mb-4">Menu</h2>
+        
+        <ul className="space-y-2">
+          {links.map((link, index) => (
+            <li key={index}>
+              <a 
+                href={`mailto:${email}?subject=${encodeURIComponent(link.subject)}`}
+                className="text-blue-500 hover:underline"
+              >
+                {link.name}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+};
 
 const ModernHelpOverlay = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
@@ -126,7 +165,9 @@ const ChronologicGame = () => {
   const [gameWon, setGameWon] = useState(false);
   const [theme, setTheme] = useState('');
   const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [gameNumber, setGameNumber] = useState('');
   const [currentDate, setCurrentDate] = useState('');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isWiggling, setIsWiggling] = useState(false);
   const [submissionStatus, setSubmissionStatus] = useState(null);
   const [showWinOverlay, setShowWinOverlay] = useState(false);
@@ -143,8 +184,7 @@ const ChronologicGame = () => {
   };
 
   useEffect(() => {
-    const puzzleDate = new Date(dailyPuzzle.date);
-    setCurrentDate(puzzleDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }));
+    setGameNumber(dailyPuzzle.gameNumber);
     const storedData = localStorage.getItem('chronologicGame');
     if (storedData) {
       const { date, results } = JSON.parse(storedData);
@@ -319,7 +359,7 @@ const ChronologicGame = () => {
     <div className="container mx-auto p-2 max-w-md flex flex-col min-h-screen">
       <div className="flex-grow">
         <h1 className="text-4xl font-bold text-center chronologic-font mb-2">Chronologic</h1>
-        <p className="text-center date-display mb-2">{currentDate}</p>
+        <p className="text-center game-number-display mb-2">Game #: {gameNumber}</p>
         <p className="text-lg mb-3 text-center italic">{theme}</p>
         <div className="flex justify-center mb-3">
           {[...Array(6)].map((_, index) => (
@@ -385,10 +425,14 @@ const ChronologicGame = () => {
         </div>
       </div>
 
-      <p className="text-sm mt-4 text-center">New puzzles daily at 8:00 AM EST</p>
+      <p className="text-sm mt-4 text-center">New puzzles daily</p>
 
       <button onClick={() => setIsHelpOpen(true)} className="fixed bottom-4 right-4 bg-blue-500 text-white rounded-full p-2">
         <QuestionMarkCircleIcon className="h-6 w-6" />
+      </button>
+
+      <button onClick={() => setIsMenuOpen(true)} className="fixed bottom-4 left-4 bg-red-500 text-white rounded-full p-2">
+        <WrenchIcon className="h-6 w-6" />
       </button>
       
       <WinOverlay 
@@ -405,6 +449,7 @@ const ChronologicGame = () => {
         onShare={() => handleShare(false)}
       />
 
+      <MenuOverlay isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
       <ModernHelpOverlay isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} />
     </div>
   );
