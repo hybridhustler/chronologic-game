@@ -299,7 +299,7 @@ const ChronologicGame = () => {
       }
     }
     
-    return `Chronologic ${dailyPuzzle.date}\n${emojiGrid}\nPlay at https://chronologic-game.vercel.app`;
+    return `Chronologic Game #: ${dailyPuzzle.gameNumber}\n${emojiGrid}\nDo you know your historical dates?\nPlay at https://chronologic-game.vercel.app`;
   };
 
   const handleShare = () => {
