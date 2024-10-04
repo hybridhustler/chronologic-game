@@ -1,0 +1,54 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@font-face {
+  font-family: 'ChronologicFont';
+  src: url('/public/ChronologicFont.ttf') format('tff');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@keyframes wiggle {
+  0% { transform: rotate(0deg); }
+  25% { transform: rotate(5deg); }
+  50% { transform: rotate(0eg); }
+  75% { transform: rotate(-5deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.wiggle {
+  animation: wiggle 0.5s ease;
+}
+
+@keyframes correct-border {
+  0%, 100% { border-color: transparent; }
+  50% { border-color: #22c55e; }
+}
+
+.correct-answer {
+  animation: correct-border 1s ease;
+}
+
+@keyframes incorrect-border {
+  0%, 100% { border-color: transparent; }
+  50% { border-color: #ef4444; }
+}
+
+.incorrect-answer {
+  animation: incorrect-border 1s ease;
+}
+
+.chronologic-font {
+  font-family: 'ChronologicFont', sans-serif;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}

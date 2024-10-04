@@ -1,0 +1,122 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+@font-face {
+  font-family: 'ChronologicFont';
+  src: url('/src/ChronologicFont.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.chronologic-font {
+  font-family: 'ChronologicFont', sans-serif;
+}
+
+.date-display {
+  font-family: 'Roboto', sans-serif;
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+
+.wiggle {
+  animation: wiggle 0.5s ease;
+}
+
+@keyframes wiggle {
+  0% { transform: rotate(0deg); }
+  25% { transform: rotate(3deg); }
+  50% { transform: rotate(0eg); }
+  75% { transform: rotate(-3deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.correct-answer {
+  animation: correct-border 1s ease;
+}
+
+@keyframes correct-border {
+  0%, 100% { border: 2px solid transparent; }
+  50% { border: 2px solid #22c55e; }
+}
+
+.incorrect-answer {
+  animation: incorrect-border 1s ease;
+}
+
+@keyframes incorrect-border {
+  0%, 100% { border: 2px solid transparent; }
+  50% { border: 2px solid #ef4444; }
+}
+
+.container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.25rem;
+}
+
+.aspect-square {
+  aspect-ratio: 1 / 1;
+}
+
+@media (max-width: 640px) {
+  .container {
+    padding: 0.5rem;
+  }
+
+  .text-2xl {
+    font-size: 1.25rem;
+  }
+
+  .text-lg {
+    font-size: 1rem;
+  }
+
+  .text-sm {
+    font-size: 0.75rem;
+  }
+
+  .text-xs {
+    font-size: 0.625rem;
+  }
+}
+
+button {
+  transition: all 0.3s ease;
+}
+
+button:hover:not(:disabled) {
+  transform: scale(1.05);
+}
+
+button:disabled {
+  opacity: 0.5;
+}
+
+.bg-green-100 {
+  background-color: #dcfce7;
+}
+
+.max-w-md {
+  max-width: 28rem;
+}
+
+.rounded {
+  border-radius: 0.25rem;
+}
+
+.font-bold {
+  font-weight: 700;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.italic {
+  font-style: italic;
+}
