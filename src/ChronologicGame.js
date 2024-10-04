@@ -47,7 +47,7 @@ const WinOverlay = ({ isOpen, onClose, correctGuesses, onShare }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4 overflow-y-auto">
       <div className="bg-white rounded-lg max-w-md w-full p-6 relative">
         <button 
           onClick={onClose}
@@ -61,9 +61,11 @@ const WinOverlay = ({ isOpen, onClose, correctGuesses, onShare }) => {
         
         <h3 className="text-xl font-semibold mb-2">Correct Answers:</h3>
         {correctGuesses.map((guess, index) => (
-          <div key={index} className="mb-2">
+          <div key={index} className="mb-4">
             <p className="font-bold">{guess.date}</p>
             <p>{guess.event}</p>
+            <a href={guess.link} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Learn more</a>
+            <img src={guess.photo} alt={guess.event} className="mt-2 w-full rounded" />
           </div>
         ))}
         
@@ -83,7 +85,7 @@ const LoseOverlay = ({ isOpen, onClose, correctDates, onShare }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4 overflow-y-auto">
       <div className="bg-white rounded-lg max-w-md w-full p-6 relative">
         <button 
           onClick={onClose}
@@ -96,9 +98,11 @@ const LoseOverlay = ({ isOpen, onClose, correctDates, onShare }) => {
         <p className="mb-4">Here are the correct answers:</p>
         
         {correctDates.map((date, index) => (
-          <div key={index} className="mb-2">
+          <div key={index} className="mb-4">
             <p className="font-bold">{date.date}</p>
             <p>{date.event}</p>
+            <a href={date.link} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Learn more</a>
+            <img src={date.photo} alt={date.event} className="mt-2 w-full rounded" />
           </div>
         ))}
         
@@ -127,6 +131,8 @@ const ChronologicGame = () => {
   const [submissionStatus, setSubmissionStatus] = useState(null);
   const [showWinOverlay, setShowWinOverlay] = useState(false);
   const [showLoseOverlay, setShowLoseOverlay] = useState(false);
+  const [gameCompleted, setGameCompleted] = useState(false);
+  const [storedResults, setStoredResults] = useState(null);
 
   const shuffleArray = (array) => {
     for (let i = array.length - 1; i > 0; i--) {
@@ -137,6 +143,16 @@ const ChronologicGame = () => {
   };
 
   useEffect(() => {
+    const storedData = localStorage.getItem('chronologicGame');
+    if (storedData) {
+      const { date, results } = JSON.parse(storedData);
+      if (date === dailyPuzzle.date) {
+        setGameCompleted(true);
+        setStoredResults(results);
+        return;
+      }
+    }
+
     const shuffledNumbers = shuffleArray([...dailyPuzzle.numbers]);
     setNumbers(shuffledNumbers.map((num, index) => ({ id: index, value: num, used: false })));
     setTheme(dailyPuzzle.theme);
@@ -148,6 +164,25 @@ const ChronologicGame = () => {
       setSelectedIds(selectedIds.filter(selectedId => selectedId !== id));
     } else if (selectedIds.length < 3) {
       setSelectedIds([...selectedIds, id]);
+    }
+  };
+
+  const handleGameEnd = (won) => {
+    const results = {
+      won,
+      correctGuesses: won ? 4 : correctGuesses.length,
+      incorrectGuesses: 6 - incorrectGuessesLeft
+    };
+    localStorage.setItem('chronologicGame', JSON.stringify({
+      date: dailyPuzzle.date,
+      results
+    }));
+    setGameCompleted(true);
+    setStoredResults(results);
+    if (won) {
+      setShowWinOverlay(true);
+    } else {
+      setShowLoseOverlay(true);
     }
   };
 
@@ -168,15 +203,15 @@ const ChronologicGame = () => {
     if (correctGuess) {
       setSubmissionStatus('correct');
       setTimeout(() => setSubmissionStatus(null), 1000);
-      setCorrectGuesses([...correctGuesses, correctGuess]);
+      const newCorrectGuesses = [...correctGuesses, correctGuess];
+      setCorrectGuesses(newCorrectGuesses);
       setNumbers(numbers.map(num => 
         selectedIds.includes(num.id) ? { ...num, used: true } : num
       ));
       setSelectedIds([]);
 
-      if (correctGuesses.length + 1 === 4) {
-        setGameWon(true);
-        setShowWinOverlay(true);
+      if (newCorrectGuesses.length === 4) {
+        handleGameEnd(true);
       }
     } else {
       setSubmissionStatus('incorrect');
@@ -184,7 +219,7 @@ const ChronologicGame = () => {
       setIncorrectGuessesLeft(incorrectGuessesLeft - 1);
       setSelectedIds([]);
       if (incorrectGuessesLeft === 1) {
-        setShowLoseOverlay(true);
+        handleGameEnd(false);
       }
     }
   };
@@ -213,16 +248,21 @@ const ChronologicGame = () => {
     return '';
   };
 
-  const generateShareText = (won) => {
-    const emoji = won ? '🎉' : '😔';
-    const guessCount = 6 - incorrectGuessesLeft;
-    const guessEmojis = '🟩'.repeat(correctGuesses.length) + '🟥'.repeat(guessCount - correctGuesses.length);
+  const generateShareText = (correctGuesses) => {
+    let emojiGrid = '';
+    for (let i = 0; i < 4; i++) {
+      if (i < correctGuesses) {
+        emojiGrid += '🟩🟩🟩\n';
+      } else {
+        emojiGrid += '🟥🟥🟥\n';
+      }
+    }
     
-    return `Chronologic ${dailyPuzzle.date} ${emoji}\n${guessEmojis}\n${correctGuesses.length}/4 in ${guessCount} guesses\n\nPlay at [Your Game URL]`;
+    return `Chronologic ${dailyPuzzle.date}\n${emojiGrid}\nPlay at https://chronologic-game.vercel.app`;
   };
 
-  const handleShare = (won) => {
-    const shareText = generateShareText(won);
+  const handleShare = () => {
+    const shareText = generateShareText(storedResults.correctGuesses);
     navigator.clipboard.writeText(shareText).then(() => {
       alert('Results copied to clipboard!');
     }, (err) => {
@@ -230,73 +270,121 @@ const ChronologicGame = () => {
     });
   };
 
-  return (
-    <div className="container mx-auto p-2 max-w-md">
-      <h1 className="text-4xl font-bold text-center chronologic-font mb-2">Chronologic</h1>
-      <p className="text-center date-display mb-2">{currentDate}</p>
-      <p className="text-lg mb-3 text-center italic">{theme}</p>
-      <div className="flex justify-center mb-3">
-        {[...Array(6)].map((_, index) => (
-          <div 
-            key={index} 
-            className={`w-3 h-3 mx-1 ${index < incorrectGuessesLeft ? 'bg-gray-300' : 'bg-transparent border border-gray-300'}`}
-          ></div>
-        ))}
-      </div>
-      
-      <div className={`grid grid-cols-3 gap-2 mb-3 ${isWiggling ? 'wiggle' : ''} ${
-        submissionStatus === 'correct' ? 'correct-answer' : 
-        submissionStatus === 'incorrect' ? 'incorrect-answer' : ''
-      }`}>
-        {numbers.map(({ id, value, used }) => (
-          <button
-            key={id}
-            onClick={() => !used && handleNumberClick(id)}
-            className={`w-full aspect-square text-black text-2xl font-bold rounded relative ${getNumberStyle(id, used)}`}
-            disabled={used || gameWon}
-          >
-            {value}
-            {selectedIds.includes(id) && (
-              <span className="absolute bottom-1 right-1 text-xs text-gray-500">
-                {getDatePartLabel(selectedIds.indexOf(id))}
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
-
-      <div className="text-center mb-3">
-        <button 
-          onClick={handleSubmit}
-          className={`border border-black text-black font-bold py-2 px-4 rounded mr-2 ${selectedIds.length === 3 ? 'bg-white hover:bg-gray-100' : 'bg-gray-200 cursor-not-allowed'}`}
-          disabled={selectedIds.length !== 3 || gameWon}
-        >
-          Submit
-        </button>
-        <button 
-          onClick={() => setSelectedIds([])}
-          className={`border border-black text-black font-bold py-2 px-4 rounded mr-2 ${selectedIds.length > 0 ? 'bg-white hover:bg-gray-100' : 'bg-gray-200 cursor-not-allowed'}`}
-          disabled={selectedIds.length === 0 || gameWon}
-        >
-          Deselect All
-        </button>
-        <button 
-          onClick={shuffleNumbers}
-          className="border border-black bg-white hover:bg-gray-100 text-black font-bold py-2 px-4 rounded"
-          disabled={gameWon}
-        >
-          Shuffle
-        </button>
-      </div>
-
-      <div className="mt-3 grid grid-cols-1 gap-1">
-        {correctGuesses.map((guess, index) => (
-          <div key={index} className="p-2 bg-green-100 rounded-lg">
-            <p className="font-bold text-sm">{guess.date}</p>
-            <p className="text-xs">{guess.event}</p>
+  if (gameCompleted) {
+    return (
+      <div className="container mx-auto p-4 max-w-md flex flex-col min-h-screen">
+        <h1 className="text-4xl font-bold text-center chronologic-font mb-6">Chronologic</h1>
+        <div className="flex-grow">
+          <p className="text-2xl font-bold mb-4 text-center">
+            {storedResults.won ? "Congratulations!" : "Better luck next time!"}
+          </p>
+          <div className="mb-6 text-center">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="flex justify-center">
+                {[...Array(3)].map((_, j) => (
+                  <div 
+                    key={j} 
+                    className={`w-6 h-6 m-1 ${i < storedResults.correctGuesses ? 'bg-green-500' : 'bg-red-500'}`}
+                  ></div>
+                ))}
+              </div>
+            ))}
           </div>
-        ))}
+          
+          <h2 className="text-xl font-semibold mb-4">Today's Answers:</h2>
+          {dailyPuzzle.correctDates.map((date, index) => (
+            <div key={index} className="mb-6 p-4 bg-gray-100 rounded-lg">
+              <p className="font-bold text-lg">{date.date}</p>
+              <p className="mb-2">{date.event}</p>
+              <a href={date.link} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Learn more</a>
+              <img src={date.photo} alt={date.event} className="mt-2 w-full rounded" />
+            </div>
+          ))}
+  
+          <button 
+            onClick={handleShare}
+            className="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded flex items-center justify-center mb-6"
+          >
+            <ShareIcon className="h-5 w-5 mr-2" />
+            Share Results
+          </button>
+        </div>
+        
+        <p className="text-sm text-center mt-4">New puzzles daily at 8:00 AM EST</p>
       </div>
+    );
+  }
+  return (
+    <div className="container mx-auto p-2 max-w-md flex flex-col min-h-screen">
+      <div className="flex-grow">
+        <h1 className="text-4xl font-bold text-center chronologic-font mb-2">Chronologic</h1>
+        <p className="text-center date-display mb-2">{currentDate}</p>
+        <p className="text-lg mb-3 text-center italic">{theme}</p>
+        <div className="flex justify-center mb-3">
+          {[...Array(6)].map((_, index) => (
+            <div 
+              key={index} 
+              className={`w-3 h-3 mx-1 ${index < incorrectGuessesLeft ? 'bg-gray-300' : 'bg-transparent border border-gray-300'}`}
+            ></div>
+          ))}
+        </div>
+        
+        <div className={`grid grid-cols-3 gap-2 mb-3 ${isWiggling ? 'wiggle' : ''} ${
+          submissionStatus === 'correct' ? 'correct-answer' : 
+          submissionStatus === 'incorrect' ? 'incorrect-answer' : ''
+        }`}>
+          {numbers.map(({ id, value, used }) => (
+            <button
+              key={id}
+              onClick={() => !used && handleNumberClick(id)}
+              className={`w-full aspect-square text-black text-2xl font-bold rounded relative ${getNumberStyle(id, used)}`}
+              disabled={used || gameWon}
+            >
+              {value}
+              {selectedIds.includes(id) && (
+                <span className="absolute bottom-1 right-1 text-xs text-gray-500">
+                  {getDatePartLabel(selectedIds.indexOf(id))}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        <div className="text-center mb-3">
+          <button 
+            onClick={handleSubmit}
+            className={`border border-black text-black font-bold py-2 px-4 rounded mr-2 ${selectedIds.length === 3 ? 'bg-white hover:bg-gray-100' : 'bg-gray-200 cursor-not-allowed'}`}
+            disabled={selectedIds.length !== 3 || gameWon}
+          >
+            Submit
+          </button>
+          <button 
+            onClick={() => setSelectedIds([])}
+            className={`border border-black text-black font-bold py-2 px-4 rounded mr-2 ${selectedIds.length > 0 ? 'bg-white hover:bg-gray-100' : 'bg-gray-200 cursor-not-allowed'}`}
+            disabled={selectedIds.length === 0 || gameWon}
+          >
+            Deselect All
+          </button>
+          <button 
+            onClick={shuffleNumbers}
+            className="border border-black bg-white hover:bg-gray-100 text-black font-bold py-2 px-4 rounded"
+            disabled={gameWon}
+          >
+            Shuffle
+          </button>
+        </div>
+
+        <div className="mt-3 grid grid-cols-1 gap-1">
+          {correctGuesses.map((guess, index) => (
+            <div key={index} className="p-2 bg-green-100 rounded-lg">
+              <p className="font-bold text-sm">{guess.date}</p>
+              <p className="text-xs">{guess.event}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <p className="text-sm mt-4 text-center">New puzzles daily at 8:00 AM EST</p>
 
       <button onClick={() => setIsHelpOpen(true)} className="fixed bottom-4 right-4 bg-blue-500 text-white rounded-full p-2">
         <QuestionMarkCircleIcon className="h-6 w-6" />
