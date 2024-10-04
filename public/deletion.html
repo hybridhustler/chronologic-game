@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Deletion Request - Scafs Enterprises</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        form {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="email"], textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        button:hover {
+            background-color: #555;
+        }
+        .note {
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <h1>Data Deletion Request</h1>
+    <p>If you wish to have your data deleted from our system, please fill out the form below. We will process your request in accordance with our Privacy Policy and applicable laws.</p>
+
+    <form action="/submit-deletion-request" method="POST">
+        <label for="name">Full Name</label>
+        <input type="text" id="name" name="name" required placeholder="Enter your full name">
+
+        <label for="email">Email Address</label>
+        <input type="email" id="email" name="email" required placeholder="Enter your email address">
+
+        <label for="username">Username (optional)</label>
+        <input type="text" id="username" name="username" placeholder="Enter your username (if applicable)">
+
+        <label for="reason">Reason for Deletion Request</label>
+        <textarea id="reason" name="reason" rows="5" required placeholder="Please explain why you want your data deleted"></textarea>
+
+        <button type="submit">Submit Deletion Request</button>
+    </form>
+
+    <p class="note">Note: Once your data is deleted, it cannot be recovered. Please ensure that you want all associated data permanently removed from our system before submitting your request.</p>
+
+</body>
+</html>
