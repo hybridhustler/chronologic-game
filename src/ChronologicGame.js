@@ -26,7 +26,7 @@ const MenuOverlay = ({ isOpen, onClose }) => {
           <XMarkIcon className="h-6 w-6" />
         </button>
         
-        <h2 className="text-2xl font-bold mb-4">Menu</h2>
+        
         
         <ul className="space-y-2">
           {links.map((link, index) => (
@@ -45,12 +45,61 @@ const MenuOverlay = ({ isOpen, onClose }) => {
   );
 };
 
+const HelpOverlay = ({ isOpen, onClose }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+      <div className="bg-white rounded-lg max-w-md w-full p-6 relative max-h-[80vh] overflow-y-auto">
+        <button 
+          onClick={onClose}
+          className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+        >
+          <XMarkIcon className="h-6 w-6" />
+        </button>
+        
+        <div className="bg-white p-6 rounded-lg shadow-lg max-w-lg mx-auto">
+  <h2 className="text-3xl font-extrabold text-center mb-6 text-orange-500">How to Play Chronologic</h2>
+  
+  <ul className="space-y-4 text-lg leading-relaxed text-black mb-6">
+    <li>
+      <span className="font-semibold text-orange-500">1. Select 3 numbers: </span> 
+      Choose 3 numbers to form a date (MM/DD/YY).
+    </li>
+    <li>
+      <span className="font-semibold text-orange-500">2. Submit your guess: </span> 
+      Click <span className="font-semibold text-orange-500">'Submit'</span> to check if your date matches one of the four historical dates.
+    </li>
+    <li>
+      <span className="font-semibold text-orange-500">3. Limited guesses: </span> 
+      You have <span className="font-semibold text-orange-500">6</span> incorrect guesses before the game ends.
+    </li>
+    <li>
+      <span className="font-semibold text-orange-500">4. Progress: </span> 
+      Correctly guessed dates will be removed from play.
+    </li>
+    <li>
+      <span className="font-semibold text-orange-500">5. Victory: </span> 
+      Win by finding all 4 historical dates before running out of guesses!
+    </li>
+  </ul>
+  
+  <p className="text-center text-black italic">
+    The theme provides a hint about the types of dates you're looking for. <span className="font-bold text-orange-500">Good luck!</span>
+  </p>
+</div>
+
+      </div>
+    </div>
+  );
+};
+
 const WinOverlay = ({ isOpen, onClose, correctGuesses, onShare }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4 overflow-y-auto">
-      <div className="bg-white rounded-lg max-w-md w-full p-6 relative">
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+      <div className="bg-white rounded-lg max-w-md w-full p-6 relative max-h-[80vh] overflow-y-auto">
         <button 
           onClick={onClose}
           className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
@@ -87,8 +136,8 @@ const LoseOverlay = ({ isOpen, onClose, correctDates, onShare }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4 overflow-y-auto">
-      <div className="bg-white rounded-lg max-w-md w-full p-6 relative">
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+      <div className="bg-white rounded-lg max-w-md w-full p-6 relative max-h-[80vh] overflow-y-auto">
         <button 
           onClick={onClose}
           className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
@@ -279,9 +328,13 @@ const ChronologicGame = () => {
   return (
     <div className="container mx-auto p-2 max-w-md relative">
       <div className="flex justify-between items-center mb-2">
-        
+        <button onClick={() => setIsMenuOpen(true)} className="fixed bottom-4 left-4 bg-red-500 text-white rounded-full p-2">
+          <WrenchIcon className="h-6 w-6" />
+        </button>
         <h1 className="text-4xl font-bold text-center chronologic-font">Chronologic</h1>
-        
+        <button onClick={() => setIsHelpOpen(true)} className="fixed bottom-4 right-4 bg-blue-500 text-white rounded-full p-2">
+          <QuestionMarkCircleIcon className="h-6 w-6" />
+        </button>
       </div>
       <p className="text-center game-number-display mb-2">Game #{gameNumber}</p>
       <p className="text-lg mb-3 text-center italic">{dailyPuzzle.theme}</p>
@@ -351,13 +404,8 @@ const ChronologicGame = () => {
       <p className="text-sm mt-4 text-center">New puzzles daily at 8:00 AM EST</p>
 
       <MenuOverlay isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
-
-        <button onClick={() => setIsMenuOpen(true)} className="fixed bottom-4 left-4 bg-red-500 text-white rounded-full p-2">
-          <WrenchIcon className="h-6 w-6" />
-        </button>
-        <button onClick={() => setIsHelpOpen(true)} className="fixed bottom-4 right-4 bg-blue-500 text-white rounded-full p-2">
-          <QuestionMarkCircleIcon className="h-6 w-6" />
-        </button>
+      
+      <HelpOverlay isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} />
       
       <WinOverlay 
         isOpen={showWinOverlay} 
