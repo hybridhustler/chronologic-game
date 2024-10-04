@@ -158,7 +158,6 @@ const ChronologicGame = () => {
     const shuffledNumbers = shuffleArray([...dailyPuzzle.numbers]);
     setNumbers(shuffledNumbers.map((num, index) => ({ id: index, value: num, used: false })));
     setTheme(dailyPuzzle.theme);
-    setCurrentDate(new Date(dailyPuzzle.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }));
   }, []);
 
   const handleNumberClick = (id) => {
