@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { QuestionMarkCircleIcon, XMarkIcon, WrenchIcon, CheckCircleIcon, ExclamationCircleIcon, ShareIcon } from '@heroicons/react/24/outline';
 import './ChronologicGame.css';
 import dailyPuzzle from './dailyPuzzle';
+import ReactGA from 'react-ga';
 
 const MenuOverlay = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
@@ -209,6 +210,11 @@ const ChronologicGame = () => {
   };
 
   const handleGameEnd = (won) => {
+    ReactGA.event({
+      category: 'Game',
+      action: won ? 'Win' : 'Lose',
+      label: `Game #${gameNumber}`
+    });
     const results = {
       won,
       correctGuesses: won ? 4 : correctGuesses.length,
