@@ -1,5 +1,6 @@
 const dailyPuzzle = {
-  gameNumber: 1, // Update this daily
+  date: '2024-10-04',
+  gameNumber: 2, // Update this daily
   theme: "Dates that changed the course of human history",
   numbers: ['07', '20', '69', '12', '25', '00', '11', '09', '89', '09', '11', '01'],
   correctDates: [
