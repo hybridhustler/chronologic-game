@@ -1,11 +1,12 @@
 import React from 'react';
 import ChronologicGame from './ChronologicGame';
+import { AuthProvider } from './AuthContext';
 
 function App() {
   return (
-    <div className="App">
+    <AuthProvider>
       <ChronologicGame />
-    </div>
+    </AuthProvider>
   );
 }
 

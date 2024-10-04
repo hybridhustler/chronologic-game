@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { QuestionMarkCircleIcon, XMarkIcon, WrenchIcon, CheckCircleIcon, ExclamationCircleIcon, ShareIcon } from '@heroicons/react/24/outline';
+import { WrenchIcon, QuestionMarkCircleIcon, ShareIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import './ChronologicGame.css';
 import dailyPuzzle from './dailyPuzzle';
-import ReactGA from 'react-ga';
+import { useAuth } from './AuthContext';
+import { signInWithPopup, GoogleAuthProvider, FacebookAuthProvider } from 'firebase/auth';
+import { auth } from './firebaseConfig';
 
 const MenuOverlay = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
@@ -38,46 +40,6 @@ const MenuOverlay = ({ isOpen, onClose }) => {
             </li>
           ))}
         </ul>
-      </div>
-    </div>
-  );
-};
-
-const ModernHelpOverlay = ({ isOpen, onClose }) => {
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
-      <div className="bg-white rounded-lg max-w-md w-full p-6 relative">
-        <button 
-          onClick={onClose}
-          className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
-        >
-          <XMarkIcon className="h-6 w-6" />
-        </button>
-        
-        <h2 className="text-2xl font-bold mb-4">How to Play</h2>
-        
-        <ul className="space-y-2 mb-4">
-          <li className="flex items-start">
-            <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2 mt-1 flex-shrink-0" />
-            <span>Select 3 numbers to form a date (MM/DD/YY) in exact order. The game provides 12 numbers to choose from.</span>
-          </li>
-          <li className="flex items-start">
-            <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2 mt-1 flex-shrink-0" />
-            <span>Click 'Submit' to check if your date is one of the four historical dates.</span>
-          </li>
-          <li className="flex items-start">
-            <ExclamationCircleIcon className="h-5 w-5 text-red-500 mr-2 mt-1 flex-shrink-0" />
-            <span>You have 6 incorrect guesses before the game ends. Each correct guess removes those numbers from play.</span>
-          </li>
-          <li className="flex items-start">
-            <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2 mt-1 flex-shrink-0" />
-            <span>Win by finding all 4 historical dates before running out of guesses!</span>
-          </li>
-        </ul>
-        
-        <p className="mb-4">The theme provides a hint about the types of dates you're looking for. Good luck!</p>
       </div>
     </div>
   );
@@ -159,22 +121,38 @@ const LoseOverlay = ({ isOpen, onClose, correctDates, onShare }) => {
 };
 
 const ChronologicGame = () => {
+  const { user } = useAuth();
   const [numbers, setNumbers] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
   const [correctGuesses, setCorrectGuesses] = useState([]);
   const [incorrectGuessesLeft, setIncorrectGuessesLeft] = useState(6);
   const [gameWon, setGameWon] = useState(false);
-  const [theme, setTheme] = useState('');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [gameNumber, setGameNumber] = useState('');
-  const [currentDate, setCurrentDate] = useState('');
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isWiggling, setIsWiggling] = useState(false);
   const [submissionStatus, setSubmissionStatus] = useState(null);
   const [showWinOverlay, setShowWinOverlay] = useState(false);
   const [showLoseOverlay, setShowLoseOverlay] = useState(false);
-  const [gameCompleted, setGameCompleted] = useState(false);
-  const [storedResults, setStoredResults] = useState(null);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+
+  useEffect(() => {
+    const shuffledNumbers = shuffleArray([...dailyPuzzle.numbers]);
+    setNumbers(shuffledNumbers.map((num, index) => ({ id: index, value: num, used: false })));
+    setGameNumber(dailyPuzzle.gameNumber);
+  }, []);
+
+  const handleSignIn = (provider) => {
+    const authProvider = provider === 'google' ? new GoogleAuthProvider() : new FacebookAuthProvider();
+    signInWithPopup(auth, authProvider)
+      .then((result) => {
+        console.log("User signed in:", result.user);
+        setShowLoginPrompt(false);
+      })
+      .catch((error) => {
+        console.error("Error signing in:", error);
+      });
+  };
 
   const shuffleArray = (array) => {
     for (let i = array.length - 1; i > 0; i--) {
@@ -184,52 +162,11 @@ const ChronologicGame = () => {
     return array;
   };
 
-  useEffect(() => {
-    setGameNumber(dailyPuzzle.gameNumber);
-    const storedData = localStorage.getItem('chronologicGame');
-    if (storedData) {
-      const { date, results } = JSON.parse(storedData);
-      if (date === dailyPuzzle.date) {
-        setGameCompleted(true);
-        setStoredResults(results);
-        return;
-      }
-    }
-
-    const shuffledNumbers = shuffleArray([...dailyPuzzle.numbers]);
-    setNumbers(shuffledNumbers.map((num, index) => ({ id: index, value: num, used: false })));
-    setTheme(dailyPuzzle.theme);
-  }, []);
-
   const handleNumberClick = (id) => {
     if (selectedIds.includes(id)) {
       setSelectedIds(selectedIds.filter(selectedId => selectedId !== id));
     } else if (selectedIds.length < 3) {
       setSelectedIds([...selectedIds, id]);
-    }
-  };
-
-  const handleGameEnd = (won) => {
-    ReactGA.event({
-      category: 'Game',
-      action: won ? 'Win' : 'Lose',
-      label: `Game #${gameNumber}`
-    });
-    const results = {
-      won,
-      correctGuesses: won ? 4 : correctGuesses.length,
-      incorrectGuesses: 6 - incorrectGuessesLeft
-    };
-    localStorage.setItem('chronologicGame', JSON.stringify({
-      date: dailyPuzzle.date,
-      results
-    }));
-    setGameCompleted(true);
-    setStoredResults(results);
-    if (won) {
-      setShowWinOverlay(true);
-    } else {
-      setShowLoseOverlay(true);
     }
   };
 
@@ -250,15 +187,15 @@ const ChronologicGame = () => {
     if (correctGuess) {
       setSubmissionStatus('correct');
       setTimeout(() => setSubmissionStatus(null), 1000);
-      const newCorrectGuesses = [...correctGuesses, correctGuess];
-      setCorrectGuesses(newCorrectGuesses);
+      setCorrectGuesses([...correctGuesses, correctGuess]);
       setNumbers(numbers.map(num => 
         selectedIds.includes(num.id) ? { ...num, used: true } : num
       ));
       setSelectedIds([]);
 
-      if (newCorrectGuesses.length === 4) {
-        handleGameEnd(true);
+      if (correctGuesses.length + 1 === 4) {
+        setGameWon(true);
+        setShowWinOverlay(true);
       }
     } else {
       setSubmissionStatus('incorrect');
@@ -266,7 +203,7 @@ const ChronologicGame = () => {
       setIncorrectGuessesLeft(incorrectGuessesLeft - 1);
       setSelectedIds([]);
       if (incorrectGuessesLeft === 1) {
-        handleGameEnd(false);
+        setShowLoseOverlay(true);
       }
     }
   };
@@ -305,158 +242,138 @@ const ChronologicGame = () => {
       }
     }
     
-    return `Chronologic Game #: ${dailyPuzzle.gameNumber}\n${emojiGrid}\nDo you know your historical dates?\nPlay at https://chronologic-game.vercel.app`;
+    return `Chronologic ${dailyPuzzle.gameNumber}\n${emojiGrid}\nPlay at https://chronologic-game.vercel.app`;
   };
 
   const handleShare = () => {
-    const shareText = generateShareText(storedResults.correctGuesses);
-    navigator.clipboard.writeText(shareText).then(() => {
-      alert('Results copied to clipboard!');
-    }, (err) => {
-      console.error('Could not copy text: ', err);
-    });
+    if (user) {
+      const shareText = generateShareText(correctGuesses.length);
+      navigator.clipboard.writeText(shareText).then(() => {
+        alert('Results copied to clipboard!');
+      }, (err) => {
+        console.error('Could not copy text: ', err);
+      });
+    } else {
+      setShowLoginPrompt(true);
+    }
   };
 
-  if (gameCompleted) {
-    return (
-      <div className="container mx-auto p-4 max-w-md flex flex-col min-h-screen">
-        <h1 className="text-4xl font-bold text-center chronologic-font mb-6">Chronologic</h1>
-        <div className="flex-grow">
-          <p className="text-2xl font-bold mb-4 text-center">
-            {storedResults.won ? "Congratulations!" : "Better luck next time!"}
-          </p>
-          <div className="mb-6 text-center">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="flex justify-center">
-                {[...Array(3)].map((_, j) => (
-                  <div 
-                    key={j} 
-                    className={`w-6 h-6 m-1 ${i < storedResults.correctGuesses ? 'bg-green-500' : 'bg-red-500'}`}
-                  ></div>
-                ))}
-              </div>
-            ))}
-          </div>
-          
-          <h2 className="text-xl font-semibold mb-4">Today's Answers:</h2>
-          {dailyPuzzle.correctDates.map((date, index) => (
-            <div key={index} className="mb-6 p-4 bg-gray-100 rounded-lg">
-              <p className="font-bold text-lg">{date.date}</p>
-              <p className="mb-2">{date.event}</p>
-              <a href={date.link} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Learn more</a>
-              <img src={date.photo} alt={date.event} className="mt-2 w-full rounded" />
-            </div>
-          ))}
-  
-          <button 
-            onClick={handleShare}
-            className="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded flex items-center justify-center mb-6"
-          >
-            <ShareIcon className="h-5 w-5 mr-2" />
-            Share Results
-          </button>
-        </div>
-        
-        <p className="text-sm text-center mt-4">New puzzles daily at 8:00 AM EST</p>
+  const LoginPrompt = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center">
+      <div className="bg-white p-6 rounded-lg">
+        <h2 className="text-xl font-bold mb-4">Login to Save Results</h2>
+        <p className="mb-4">Login to save your game results and share them.</p>
+        <button onClick={() => handleSignIn('google')} className="bg-blue-500 text-white px-4 py-2 rounded mr-2">
+          Sign in with Google
+        </button>
+        <button onClick={() => handleSignIn('facebook')} className="bg-blue-600 text-white px-4 py-2 rounded">
+          Sign in with Facebook
+        </button>
+        <button onClick={() => setShowLoginPrompt(false)} className="mt-4 text-gray-600">
+          Cancel
+        </button>
       </div>
-    );
-  }
+    </div>
+  );
+
   return (
-    <div className="container mx-auto p-2 max-w-md flex flex-col min-h-screen">
-      <div className="flex-grow">
-        <h1 className="text-4xl font-bold text-center chronologic-font mb-2">Chronologic</h1>
-        <p className="text-center game-number-display mb-2">Game #: {gameNumber}</p>
-        <p className="text-lg mb-3 text-center italic">{theme}</p>
-        <div className="flex justify-center mb-3">
-          {[...Array(6)].map((_, index) => (
-            <div 
-              key={index} 
-              className={`w-3 h-3 mx-1 ${index < incorrectGuessesLeft ? 'bg-gray-300' : 'bg-transparent border border-gray-300'}`}
-            ></div>
-          ))}
-        </div>
+    <div className="container mx-auto p-2 max-w-md relative">
+      <div className="flex justify-between items-center mb-2">
         
-        <div className={`grid grid-cols-3 gap-2 mb-3 ${isWiggling ? 'wiggle' : ''} ${
-          submissionStatus === 'correct' ? 'correct-answer' : 
-          submissionStatus === 'incorrect' ? 'incorrect-answer' : ''
-        }`}>
-          {numbers.map(({ id, value, used }) => (
-            <button
-              key={id}
-              onClick={() => !used && handleNumberClick(id)}
-              className={`w-full aspect-square text-black text-2xl font-bold rounded relative ${getNumberStyle(id, used)}`}
-              disabled={used || gameWon}
-            >
-              {value}
-              {selectedIds.includes(id) && (
-                <span className="absolute bottom-1 right-1 text-xs text-gray-500">
-                  {getDatePartLabel(selectedIds.indexOf(id))}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-
-        <div className="text-center mb-3">
-          <button 
-            onClick={handleSubmit}
-            className={`border border-black text-black font-bold py-2 px-4 rounded mr-2 ${selectedIds.length === 3 ? 'bg-white hover:bg-gray-100' : 'bg-gray-200 cursor-not-allowed'}`}
-            disabled={selectedIds.length !== 3 || gameWon}
+        <h1 className="text-4xl font-bold text-center chronologic-font">Chronologic</h1>
+        
+      </div>
+      <p className="text-center game-number-display mb-2">Game #{gameNumber}</p>
+      <p className="text-lg mb-3 text-center italic">{dailyPuzzle.theme}</p>
+      <div className="flex justify-center mb-3">
+        {[...Array(6)].map((_, index) => (
+          <div 
+            key={index} 
+            className={`w-3 h-3 mx-1 ${index < incorrectGuessesLeft ? 'bg-gray-300' : 'bg-transparent border border-gray-300'}`}
+          ></div>
+        ))}
+      </div>
+      
+      <div className={`grid grid-cols-3 gap-2 mb-3 ${isWiggling ? 'wiggle' : ''} ${
+        submissionStatus === 'correct' ? 'correct-answer' : 
+        submissionStatus === 'incorrect' ? 'incorrect-answer' : ''
+      }`}>
+        {numbers.map(({ id, value, used }) => (
+          <button
+            key={id}
+            onClick={() => !used && handleNumberClick(id)}
+            className={`w-full aspect-square text-black text-2xl font-bold rounded relative ${getNumberStyle(id, used)}`}
+            disabled={used || gameWon}
           >
-            Submit
+            {value}
+            {selectedIds.includes(id) && (
+              <span className="absolute bottom-1 right-1 text-xs text-gray-500">
+                {getDatePartLabel(selectedIds.indexOf(id))}
+              </span>
+            )}
           </button>
-          <button 
-            onClick={() => setSelectedIds([])}
-            className={`border border-black text-black font-bold py-2 px-4 rounded mr-2 ${selectedIds.length > 0 ? 'bg-white hover:bg-gray-100' : 'bg-gray-200 cursor-not-allowed'}`}
-            disabled={selectedIds.length === 0 || gameWon}
-          >
-            Deselect All
-          </button>
-          <button 
-            onClick={shuffleNumbers}
-            className="border border-black bg-white hover:bg-gray-100 text-black font-bold py-2 px-4 rounded"
-            disabled={gameWon}
-          >
-            Shuffle
-          </button>
-        </div>
-
-        <div className="mt-3 grid grid-cols-1 gap-1">
-          {correctGuesses.map((guess, index) => (
-            <div key={index} className="p-2 bg-green-100 rounded-lg">
-              <p className="font-bold text-sm">{guess.date}</p>
-              <p className="text-xs">{guess.event}</p>
-            </div>
-          ))}
-        </div>
+        ))}
       </div>
 
-      <p className="text-sm mt-4 text-center">New puzzles daily</p>
+      <div className="text-center mb-3">
+        <button 
+          onClick={handleSubmit}
+          className={`border border-black text-black font-bold py-2 px-4 rounded mr-2 ${selectedIds.length === 3 ? 'bg-white hover:bg-gray-100' : 'bg-gray-200 cursor-not-allowed'}`}
+          disabled={selectedIds.length !== 3 || gameWon}
+        >
+          Submit
+        </button>
+        <button 
+          onClick={() => setSelectedIds([])}
+          className={`border border-black text-black font-bold py-2 px-4 rounded mr-2 ${selectedIds.length > 0 ? 'bg-white hover:bg-gray-100' : 'bg-gray-200 cursor-not-allowed'}`}
+          disabled={selectedIds.length === 0 || gameWon}
+        >
+          Deselect All
+        </button>
+        <button 
+          onClick={shuffleNumbers}
+          className="border border-black bg-white hover:bg-gray-100 text-black font-bold py-2 px-4 rounded"
+          disabled={gameWon}
+        >
+          Shuffle
+        </button>
+      </div>
 
-      <button onClick={() => setIsHelpOpen(true)} className="fixed bottom-4 right-4 bg-blue-500 text-white rounded-full p-2">
-        <QuestionMarkCircleIcon className="h-6 w-6" />
-      </button>
+      <div className="mt-3 grid grid-cols-1 gap-1">
+        {correctGuesses.map((guess, index) => (
+          <div key={index} className="p-2 bg-green-100 rounded-lg">
+            <p className="font-bold text-sm">{guess.date}</p>
+            <p className="text-xs">{guess.event}</p>
+          </div>
+        ))}
+      </div>
 
-      <button onClick={() => setIsMenuOpen(true)} className="fixed bottom-4 left-4 bg-red-500 text-white rounded-full p-2">
-        <WrenchIcon className="h-6 w-6" />
-      </button>
+      <p className="text-sm mt-4 text-center">New puzzles daily at 8:00 AM EST</p>
+
+      <MenuOverlay isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
+
+        <button onClick={() => setIsMenuOpen(true)} className="fixed bottom-4 left-4 bg-red-500 text-white rounded-full p-2">
+          <WrenchIcon className="h-6 w-6" />
+        </button>
+        <button onClick={() => setIsHelpOpen(true)} className="fixed bottom-4 right-4 bg-blue-500 text-white rounded-full p-2">
+          <QuestionMarkCircleIcon className="h-6 w-6" />
+        </button>
       
       <WinOverlay 
         isOpen={showWinOverlay} 
         onClose={() => setShowWinOverlay(false)} 
         correctGuesses={correctGuesses}
-        onShare={() => handleShare(true)}
+        onShare={handleShare}
       />
 
       <LoseOverlay 
         isOpen={showLoseOverlay} 
         onClose={() => setShowLoseOverlay(false)} 
         correctDates={dailyPuzzle.correctDates}
-        onShare={() => handleShare(false)}
+        onShare={handleShare}
       />
 
-      <MenuOverlay isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
-      <ModernHelpOverlay isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} />
+      {showLoginPrompt && <LoginPrompt />}
     </div>
   );
 };
