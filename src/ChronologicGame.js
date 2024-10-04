@@ -143,6 +143,8 @@ const ChronologicGame = () => {
   };
 
   useEffect(() => {
+    const puzzleDate = new Date(dailyPuzzle.date);
+    setCurrentDate(puzzleDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }));
     const storedData = localStorage.getItem('chronologicGame');
     if (storedData) {
       const { date, results } = JSON.parse(storedData);
