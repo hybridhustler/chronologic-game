@@ -18,7 +18,7 @@ const MenuOverlay = ({ isOpen, onClose, darkMode, setDarkMode }) => {
   ];
 
   return (
-    <div className={`fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4 ${darkMode ? 'dark' : ''}`}>
+    <div className={`fixed inset-0 bg-opacity-50 z-50 flex justify-center items-center p-4 ${darkMode ? 'dark' : ''}`}>
       <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6 relative">
         <button 
           onClick={onClose}
@@ -60,7 +60,7 @@ const HelpOverlay = ({ isOpen, onClose, darkMode }) => {
   if (!isOpen) return null;
 
   return (
-    <div className={`fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4 ${darkMode ? 'dark' : ''}`}>
+    <div className={`fixed inset-0 bg-opacity-50 z-50 flex justify-center items-center p-4 ${darkMode ? 'dark' : ''}`}>
       <div className="bg-white dark:bg-gray-800 rounded-lg max-w-xl w-full p-6 relative max-h-[100vh] overflow-y-auto">
         <button 
           onClick={onClose}
@@ -176,7 +176,7 @@ const ChronologicGame = () => {
   const [puzzle, setPuzzle] = useState(null);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(false); // Set to false to default to light mode
 
   useEffect(() => {
     const loadGameState = async () => {
