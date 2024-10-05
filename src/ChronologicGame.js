@@ -4,6 +4,8 @@ import { ClipLoader } from 'react-spinners';
 import Confetti from 'react-confetti';
 import './ChronologicGame.css';
 import { loadPuzzle } from './puzzleLoader';
+import AdSenseScriptLoader from './AdSenseScriptLoader';
+import AdUnit from './AdUnit';
 
 const MenuOverlay = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
@@ -73,11 +75,11 @@ const HelpOverlay = ({ isOpen, onClose }) => {
 
           <div className="space-y-6">
             <div className="text-left">
-            <img src="example.png" alt="Incorrect Example" className="w-full h-auto max-w-xs rounded-lg shadow-lg mx-auto" />
+              <img src="example.png" alt="Incorrect Example" className="w-full h-auto max-w-xs rounded-lg shadow-lg mx-auto" />
             </div>
 
             <div className="text-left">
-            <img src="example2.png" alt="Correct Example" className="w-full h-auto max-w-xs rounded-lg shadow-lg mx-auto" />
+              <img src="example2.png" alt="Correct Example" className="w-full h-auto max-w-xs rounded-lg shadow-lg mx-auto" />
             </div>
           </div>
 
@@ -162,8 +164,6 @@ const IntroScreen = ({ onPlay, onHowToPlay, currentDate, gameNumber }) => {
     </div>
   );
 };
-
-
 
 const ChronologicGame = () => {
   const [numbers, setNumbers] = useState([]);
@@ -399,105 +399,112 @@ const ChronologicGame = () => {
   }
 
   return (
-    <div className="flex justify-center items-start min-h-screen p-4">
-      <AdSpace position="left" />
-      <div className="w-full max-w-md">
-        {showConfetti && <Confetti />}
-        
-        {gameWon || incorrectGuessesLeft === 0 ? (
-          <GameCompletionScreen 
-            won={gameWon}
-            correctGuesses={correctGuesses}
-            correctDates={puzzle.correctDates}
-            onShare={handleShare}
-            gameNumber={gameNumber}
-            theme={puzzle.theme}
-          />
-        ) : (
-          <>
-            <div className="flex justify-between items-center mb-2">
-              <button onClick={() => setIsMenuOpen(true)} className="bg-red-500 text-white rounded-full p-2">
-                <WrenchIcon className="h-6 w-6" />
-              </button>
-              <h1 className="text-4xl font-bold text-center chronologic-font">Chronologic</h1>
-              <button onClick={() => setIsHelpOpen(true)} className="bg-blue-500 text-white rounded-full p-2">
-                <QuestionMarkCircleIcon className="h-6 w-6" />
-              </button>
-            </div>
-            <p className="text-2xl text-center game-number-display mb-2">Game #{gameNumber}</p>
-            <p className="text-lg mb-3 text-center italic">{puzzle.theme}</p>
-            <div className="flex justify-center mb-3">
-              {[...Array(6)].map((_, index) => (
-                <div 
-                  key={index} 
-                  className={`w-3 h-3 mx-1 ${index < incorrectGuessesLeft ? 'bg-gray-300' : 'bg-transparent border border-gray-300'}`}
-                ></div>
-              ))}
-            </div>
-            
-            <div className={`grid grid-cols-3 gap-2 mb-3 ${isWiggling ? 'wiggle' : ''} ${
-              submissionStatus === 'correct' ? 'correct-answer' : 
-              submissionStatus === 'incorrect' ? 'incorrect-answer' : ''
-            }`}>
-              {numbers.map(({ id, value, used }) => (
-                <button
-                  key={id}
-                  onClick={() => !used && handleNumberClick(id)}
-                  className={`w-full aspect-square text-black text-2xl font-bold rounded relative ${getNumberStyle(id, used)}`}
-                  disabled={used || gameWon}
-                >
-                  {value}
-                  {selectedIds.includes(id) && (
-                    <span className="absolute bottom-1 right-1 text-xs text-gray-500">
-                      {getDatePartLabel(selectedIds.indexOf(id))}
-                    </span>
-                  )}
+    <>
+      <AdSenseScriptLoader />
+      <div className="flex justify-center items-start min-h-screen p-4">
+        <div className="hidden lg:block w-64 mr-4">
+          <AdUnit />
+        </div>
+        <div className="w-full max-w-md">
+          {showConfetti && <Confetti />}
+          
+          {gameWon || incorrectGuessesLeft === 0 ? (
+            <GameCompletionScreen 
+              won={gameWon}
+              correctGuesses={correctGuesses}
+              correctDates={puzzle.correctDates}
+              onShare={handleShare}
+              gameNumber={gameNumber}
+              theme={puzzle.theme}
+            />
+          ) : (
+            <>
+              <div className="flex justify-between items-center mb-2">
+                <button onClick={() => setIsMenuOpen(true)} className="bg-red-500 text-white rounded-full p-2">
+                  <WrenchIcon className="h-6 w-6" />
                 </button>
-              ))}
-            </div>
+                <h1 className="text-4xl font-bold text-center chronologic-font">Chronologic</h1>
+                <button onClick={() => setIsHelpOpen(true)} className="bg-blue-500 text-white rounded-full p-2">
+                  <QuestionMarkCircleIcon className="h-6 w-6" />
+                </button>
+              </div>
+              <p className="text-2xl text-center game-number-display mb-2">Game #{gameNumber}</p>
+              <p className="text-lg mb-3 text-center italic">{puzzle.theme}</p>
+              <div className="flex justify-center mb-3">
+                {[...Array(6)].map((_, index) => (
+                  <div 
+                    key={index} 
+                    className={`w-3 h-3 mx-1 ${index < incorrectGuessesLeft ? 'bg-gray-300' : 'bg-transparent border border-gray-300'}`}
+                  ></div>
+                ))}
+              </div>
+              
+              <div className={`grid grid-cols-3 gap-2 mb-3 ${isWiggling ? 'wiggle' : ''} ${
+                submissionStatus === 'correct' ? 'correct-answer' : 
+                submissionStatus === 'incorrect' ? 'incorrect-answer' : ''
+              }`}>
+                {numbers.map(({ id, value, used }) => (
+                  <button
+                    key={id}
+                    onClick={() => !used && handleNumberClick(id)}
+                    className={`w-full aspect-square text-black text-2xl font-bold rounded relative ${getNumberStyle(id, used)}`}
+                    disabled={used || gameWon}
+                  >
+                    {value}
+                    {selectedIds.includes(id) && (
+                      <span className="absolute bottom-1 right-1 text-xs text-gray-500">
+                        {getDatePartLabel(selectedIds.indexOf(id))}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
 
-            <div className="text-center mb-3">
-              <button 
-                onClick={handleSubmit}
-                className={`border border-black text-black font-bold py-2 px-4 rounded mr-2 ${selectedIds.length === 3 ? 'bg-white hover:bg-gray-100' : 'bg-gray-200 cursor-not-allowed'}`}
-                disabled={selectedIds.length !== 3 || gameWon}
-              >
-                Submit
-              </button>
-              <button 
-                onClick={() => setSelectedIds([])}
-                className={`border border-black text-black font-bold py-2 px-4 rounded mr-2 ${selectedIds.length > 0 ? 'bg-white hover:bg-gray-100' : 'bg-gray-200 cursor-not-allowed'}`}
-                disabled={selectedIds.length === 0 || gameWon}
-              >
-                Deselect All
-              </button>
-              <button 
-                onClick={shuffleNumbers}
-                className="border border-black bg-white hover:bg-gray-100 text-black font-bold py-2 px-4 rounded"
-                disabled={gameWon}
-              >
-                Shuffle
-              </button>
-            </div>
+              <div className="text-center mb-3">
+                <button 
+                  onClick={handleSubmit}
+                  className={`border border-black text-black font-bold py-2 px-4 rounded mr-2 ${selectedIds.length === 3 ? 'bg-white hover:bg-gray-100' : 'bg-gray-200 cursor-not-allowed'}`}
+                  disabled={selectedIds.length !== 3 || gameWon}
+                >
+                  Submit
+                </button>
+                <button 
+                  onClick={() => setSelectedIds([])}
+                  className={`border border-black text-black font-bold py-2 px-4 rounded mr-2 ${selectedIds.length > 0 ? 'bg-white hover:bg-gray-100' : 'bg-gray-200 cursor-not-allowed'}`}
+                  disabled={selectedIds.length === 0 || gameWon}
+                >
+                  Deselect All
+                </button>
+                <button 
+                  onClick={shuffleNumbers}
+                  className="border border-black bg-white hover:bg-gray-100 text-black font-bold py-2 px-4 rounded"
+                  disabled={gameWon}
+                >
+                  Shuffle
+                </button>
+              </div>
 
-            <div className="mt-3 grid grid-cols-1 gap-1">
-              {correctGuesses.map((guess, index) => (
-                <div key={index} className="p-2 bg-green-100 rounded-lg">
-                  <p className="font-bold text-sm">{guess.date}</p>
-                  <p className="text-xs">{guess.event}</p>
-                </div>
-              ))}
-            </div>
+              <div className="mt-3 grid grid-cols-1 gap-1">
+                {correctGuesses.map((guess, index) => (
+                  <div key={index} className="p-2 bg-green-100 rounded-lg">
+                    <p className="font-bold text-sm">{guess.date}</p>
+                    <p className="text-xs">{guess.event}</p>
+                  </div>
+                ))}
+              </div>
 
-            {renderNavigationButtons()}
-          </>
-        )}
+              {renderNavigationButtons()}
+            </>
+          )}
 
-        <MenuOverlay isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
-        <HelpOverlay isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} />
+          <MenuOverlay isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
+          <HelpOverlay isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} />
+        </div>
+        <div className="hidden lg:block w-64 ml-4">
+          <AdUnit />
+        </div>
       </div>
-      <AdSpace position="right" />
-    </div>
+    </>
   );
 };
 
