@@ -163,22 +163,7 @@ const IntroScreen = ({ onPlay, onHowToPlay, currentDate, gameNumber }) => {
   );
 };
 
-const AdSpace = ({ position }) => {
-  useEffect(() => {
-    (window.adsbygoogle = window.adsbygoogle || []).push({});
-  }, []);
 
-  return (
-    <div className={`hidden lg:block w-64 h-full ${position === 'left' ? 'mr-4' : 'ml-4'}`}>
-      <ins className="adsbygoogle"
-           style={{display: 'block'}}
-           data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
-           data-ad-slot="XXXXXXXXXX"
-           data-ad-format="auto"
-           data-full-width-responsive="true"></ins>
-    </div>
-  );
-};
 
 const ChronologicGame = () => {
   const [numbers, setNumbers] = useState([]);
