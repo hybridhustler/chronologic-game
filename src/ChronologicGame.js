@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { WrenchIcon, QuestionMarkCircleIcon, ShareIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { WrenchIcon, QuestionMarkCircleIcon, ShareIcon, XMarkIcon, ArrowLeftIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 import { ClipLoader } from 'react-spinners';
 import Confetti from 'react-confetti';
 import './ChronologicGame.css';
-import { useAuth } from './AuthContext';
-import { signInWithPopup, GoogleAuthProvider, FacebookAuthProvider } from 'firebase/auth';
-import { auth } from './firebaseConfig';
-import dailyPuzzle from './dailyPuzzle';
+import { loadPuzzle } from './puzzleLoader';
 
 const MenuOverlay = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
@@ -88,13 +85,12 @@ const HelpOverlay = ({ isOpen, onClose }) => {
             New puzzles daily
           </p>
         </div>
-
       </div>
     </div>
   );
 };
 
-const GameCompletionScreen = ({ won, correctGuesses, correctDates, onShare, gameNumber }) => {
+const GameCompletionScreen = ({ won, correctGuesses, correctDates, onShare, gameNumber, theme }) => {
   const generateShareText = (correctGuessesCount) => {
     let emojiGrid = '';
     for (let i = 0; i < 4; i++) {
@@ -104,7 +100,7 @@ const GameCompletionScreen = ({ won, correctGuesses, correctDates, onShare, game
         emojiGrid += '🟥🟥🟥\n';
       }
     }
-    return `Chronologic Game #: ${gameNumber}\n${emojiGrid}\nPlay at https://chronologic-game.vercel.app`;
+    return `Chronologic Game #${gameNumber} - ${theme}\n${emojiGrid}\nPlay at https://chronologic-game.vercel.app`;
   };
 
   const shareText = generateShareText(correctGuesses.length);
@@ -135,44 +131,51 @@ const GameCompletionScreen = ({ won, correctGuesses, correctDates, onShare, game
           <img src={date.photo} alt={date.event} className="mt-2 w-full rounded" />
         </div>
       ))}
-      
-      <p className="text-sm mt-4 text-center">New puzzles daily</p>
     </div>
   );
 };
 
-const IntroScreen = ({ onPlay, onHowToPlay }) => {
-  const currentDate = new Date().toLocaleDateString('en-US', { 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
-  });
-
+const IntroScreen = ({ onPlay, onHowToPlay, currentDate, gameNumber }) => {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
       <img 
-      src="logo.png" 
-      alt="Game Logo" 
-      className="w-80 h-auto mb-4" 
-    />
+        src="logo.png" 
+        alt="Game Logo" 
+        className="w-80 h-auto mb-4" 
+      />
       <h1 className="text-4xl font-bold mb-4 chronologic-font">Chronologic</h1>
       <p className="text-xl mb-6 text-center font-serif" style={{ fontFamily: 'Bangers' }}>
         Get 6 chances to guess 4 historical dates.
       </p>
 
-
       <div className="space-y-4">
-      <button
-  onClick={() => { onPlay(); onHowToPlay(); }} 
-  className="border border-black bg-white hover:bg-green-100 text-black font-bold py-2 px-4 rounded"
->
-  Play
-</button>
-
+        <button
+          onClick={() => { onPlay(); onHowToPlay(); }}
+          className="border border-black bg-white hover:bg-green-100 text-black font-bold py-2 px-4 rounded"
+        >
+          Play
+        </button>
       </div>
       <p className="mt-8 text-sm text-gray-600">{currentDate}</p>
-      <p className="text-sm text-gray-600">No. {dailyPuzzle.gameNumber}</p>
+      <p className="text-sm text-gray-600">No. {gameNumber}</p>
       <p className="text-sm text-gray-600">Edited by <b>John Scafide</b></p>
+    </div>
+  );
+};
+
+const AdSpace = ({ position }) => {
+  useEffect(() => {
+    (window.adsbygoogle = window.adsbygoogle || []).push({});
+  }, []);
+
+  return (
+    <div className={`hidden lg:block w-64 h-full ${position === 'left' ? 'mr-4' : 'ml-4'}`}>
+      <ins className="adsbygoogle"
+           style={{display: 'block'}}
+           data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+           data-ad-slot="XXXXXXXXXX"
+           data-ad-format="auto"
+           data-full-width-responsive="true"></ins>
     </div>
   );
 };
@@ -191,40 +194,49 @@ const ChronologicGame = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showConfetti, setShowConfetti] = useState(false);
   const [showIntro, setShowIntro] = useState(true);
+  const [puzzle, setPuzzle] = useState(null);
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
 
   useEffect(() => {
     const loadGameState = async () => {
       setIsLoading(true);
-      const currentDate = new Date().toDateString();
       const savedState = localStorage.getItem('chronologicGameState');
       
-      if (savedState) {
-        const { date, gameState, gameNumber: savedGameNumber } = JSON.parse(savedState);
+      try {
+        const loadedPuzzle = await loadPuzzle(selectedDate);
+        setPuzzle(loadedPuzzle);
+        setGameNumber(loadedPuzzle.gameNumber);
         
-        if (date === currentDate && savedGameNumber === dailyPuzzle.gameNumber) {
-          setGameWon(gameState.gameWon || false);
-          setIncorrectGuessesLeft(gameState.incorrectGuessesLeft || 6);
-          setCorrectGuesses(gameState.correctGuesses || []);
-          setNumbers(gameState.numbers || []);
-          setGameNumber(savedGameNumber);
-          setShowIntro(false);
+        if (savedState) {
+          const { date, gameState, gameNumber: savedGameNumber } = JSON.parse(savedState);
+          
+          if (date === selectedDate && savedGameNumber === loadedPuzzle.gameNumber) {
+            setGameWon(gameState.gameWon || false);
+            setIncorrectGuessesLeft(gameState.incorrectGuessesLeft || 6);
+            setCorrectGuesses(gameState.correctGuesses || []);
+            setNumbers(gameState.numbers || []);
+            setShowIntro(false);
+          } else {
+            initializeNewGame(loadedPuzzle);
+          }
         } else {
-          initializeNewGame();
+          initializeNewGame(loadedPuzzle);
         }
-      } else {
-        initializeNewGame();
+      } catch (error) {
+        console.error('Error loading puzzle:', error);
+        // Handle error (e.g., show error message to user)
       }
       
       setIsLoading(false);
     };
 
     loadGameState();
-  }, []);
+  }, [selectedDate]);
 
-  const initializeNewGame = () => {
-    const shuffledNumbers = shuffleArray([...dailyPuzzle.numbers]);
+  const initializeNewGame = (loadedPuzzle) => {
+    const shuffledNumbers = shuffleArray([...loadedPuzzle.numbers]);
     setNumbers(shuffledNumbers.map((num, index) => ({ id: index, value: num, used: false })));
-    setGameNumber(dailyPuzzle.gameNumber);
   };
 
   const saveGameState = () => {
@@ -234,9 +246,8 @@ const ChronologicGame = () => {
       correctGuesses,
       numbers
     };
-    const currentDate = new Date().toDateString();
     localStorage.setItem('chronologicGameState', JSON.stringify({
-      date: currentDate,
+      date: selectedDate,
       gameState,
       gameNumber: gameNumber
     }));
@@ -270,7 +281,7 @@ const ChronologicGame = () => {
     const selectedNumbers = selectedIds.map(id => numbers.find(num => num.id === id).value);
     const formattedDate = `${selectedNumbers[0]}/${selectedNumbers[1]}/${selectedNumbers[2]}`;
     
-    const correctGuess = dailyPuzzle.correctDates.find(date => date.date === formattedDate);
+    const correctGuess = puzzle.correctDates.find(date => date.date === formattedDate);
 
     if (correctGuess) {
       setSubmissionStatus('correct');
@@ -328,6 +339,57 @@ const ChronologicGame = () => {
     });
   };
 
+  const changeDate = (direction) => {
+    const newDate = new Date(currentDate);
+    newDate.setDate(newDate.getDate() + direction);
+    
+    // Ensure we don't go beyond today's date
+    if (newDate > new Date()) {
+      return;
+    }
+    
+    setCurrentDate(newDate);
+    setSelectedDate(newDate.toISOString().split('T')[0]);
+    // Reset game state for the new date
+    setGameWon(false);
+    setIncorrectGuessesLeft(6);
+    setCorrectGuesses([]);
+    setSelectedIds([]);
+    setShowIntro(true);
+  };
+
+  const renderNavigationButtons = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const isPastDate = currentDate < today;
+    const isFutureDate = currentDate > today;
+
+    return (
+      <div className="flex justify-between items-center mt-4">
+        <button
+          onClick={() => changeDate(-1)}
+          className="text-blue-500 hover:text-blue-700"
+          aria-label="Previous day"
+        >
+          <ArrowLeftIcon className="h-6 w-6" />
+        </button>
+        <span className="text-sm text-gray-600">
+          {currentDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+        </span>
+        {isPastDate && (
+          <button
+            onClick={() => changeDate(1)}
+            className="text-blue-500 hover:text-blue-700"
+            aria-label="Next day"
+          >
+            <ArrowRightIcon className="h-6 w-6" />
+          </button>
+        )}
+        {!isPastDate && <div className="w-6"></div>} {/* Placeholder for alignment */}
+      </div>
+    );
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -341,104 +403,115 @@ const ChronologicGame = () => {
       <IntroScreen 
         onPlay={() => setShowIntro(false)} 
         onHowToPlay={() => setIsHelpOpen(true)}
+        currentDate={currentDate.toLocaleDateString('en-US', { 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        })}
+        gameNumber={gameNumber}
       />
     );
   }
 
   return (
-    <div className="container mx-auto p-2 max-w-md relative">
-      {showConfetti && <Confetti />}
-      
-      {gameWon || incorrectGuessesLeft === 0 ? (
-        <GameCompletionScreen 
-          won={gameWon}
-          correctGuesses={correctGuesses}
-          correctDates={dailyPuzzle.correctDates}
-          onShare={handleShare}
-          gameNumber={gameNumber}
-        />
-      ) : (
-        <>
-          <div className="flex justify-between items-center mb-2">
-            <button onClick={() => setIsMenuOpen(true)} className="fixed bottom-4 left-4 bg-red-500 text-white rounded-full p-2">
-              <WrenchIcon className="h-6 w-6" />
-            </button>
-            <h1 className="text-4xl font-bold text-center chronologic-font">Chronologic</h1>
-            <button onClick={() => setIsHelpOpen(true)} className="fixed bottom-4 right-4 bg-blue-500 text-white rounded-full p-2">
-              <QuestionMarkCircleIcon className="h-6 w-6" />
-            </button>
-          </div>
-          <p className="text-2xl text-center game-number-display mb-2">Game #{gameNumber}</p>
-          <p className="text-lg mb-3 text-center italic">{dailyPuzzle.theme}</p>
-          <div className="flex justify-center mb-3">
-            {[...Array(6)].map((_, index) => (
-              <div 
-                key={index} 
-                className={`w-3 h-3 mx-1 ${index < incorrectGuessesLeft ? 'bg-gray-300' : 'bg-transparent border border-gray-300'}`}
-              ></div>
-            ))}
-          </div>
-          
-          <div className={`grid grid-cols-3 gap-2 mb-3 ${isWiggling ? 'wiggle' : ''} ${
-            submissionStatus === 'correct' ? 'correct-answer' : 
-            submissionStatus === 'incorrect' ? 'incorrect-answer' : ''
-          }`}>
-            {numbers.map(({ id, value, used }) => (
-              <button
-                key={id}
-                onClick={() => !used && handleNumberClick(id)}
-                className={`w-full aspect-square text-black text-2xl font-bold rounded relative ${getNumberStyle(id, used)}`}
-                disabled={used || gameWon}
-              >
-                {value}
-                {selectedIds.includes(id) && (
-                  <span className="absolute bottom-1 right-1 text-xs text-gray-500">
-                    {getDatePartLabel(selectedIds.indexOf(id))}
-                  </span>
-                )}
+    <div className="flex justify-center items-start min-h-screen p-4">
+      <AdSpace position="left" />
+      <div className="w-full max-w-md">
+        {showConfetti && <Confetti />}
+        
+        {gameWon || incorrectGuessesLeft === 0 ? (
+          <GameCompletionScreen 
+            won={gameWon}
+            correctGuesses={correctGuesses}
+            correctDates={puzzle.correctDates}
+            onShare={handleShare}
+            gameNumber={gameNumber}
+            theme={puzzle.theme}
+          />
+        ) : (
+          <>
+            <div className="flex justify-between items-center mb-2">
+              <button onClick={() => setIsMenuOpen(true)} className="bg-red-500 text-white rounded-full p-2">
+                <WrenchIcon className="h-6 w-6" />
               </button>
-            ))}
-          </div>
+              <h1 className="text-4xl font-bold text-center chronologic-font">Chronologic</h1>
+              <button onClick={() => setIsHelpOpen(true)} className="bg-blue-500 text-white rounded-full p-2">
+                <QuestionMarkCircleIcon className="h-6 w-6" />
+              </button>
+            </div>
+            <p className="text-2xl text-center game-number-display mb-2">Game #{gameNumber}</p>
+            <p className="text-lg mb-3 text-center italic">{puzzle.theme}</p>
+            <div className="flex justify-center mb-3">
+              {[...Array(6)].map((_, index) => (
+                <div 
+                  key={index} 
+                  className={`w-3 h-3 mx-1 ${index < incorrectGuessesLeft ? 'bg-gray-300' : 'bg-transparent border border-gray-300'}`}
+                ></div>
+              ))}
+            </div>
+            
+            <div className={`grid grid-cols-3 gap-2 mb-3 ${isWiggling ? 'wiggle' : ''} ${
+              submissionStatus === 'correct' ? 'correct-answer' : 
+              submissionStatus === 'incorrect' ? 'incorrect-answer' : ''
+            }`}>
+              {numbers.map(({ id, value, used }) => (
+                <button
+                  key={id}
+                  onClick={() => !used && handleNumberClick(id)}
+                  className={`w-full aspect-square text-black text-2xl font-bold rounded relative ${getNumberStyle(id, used)}`}
+                  disabled={used || gameWon}
+                >
+                  {value}
+                  {selectedIds.includes(id) && (
+                    <span className="absolute bottom-1 right-1 text-xs text-gray-500">
+                      {getDatePartLabel(selectedIds.indexOf(id))}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
 
-          <div className="text-center mb-3">
-            <button 
-              onClick={handleSubmit}
-              className={`border border-black text-black font-bold py-2 px-4 rounded mr-2 ${selectedIds.length === 3 ? 'bg-white hover:bg-gray-100' : 'bg-gray-200 cursor-not-allowed'}`}
-              disabled={selectedIds.length !== 3 || gameWon}
-            >
-              Submit
-            </button>
-            <button 
-              onClick={() => setSelectedIds([])}
-              className={`border border-black text-black font-bold py-2 px-4 rounded mr-2 ${selectedIds.length > 0 ? 'bg-white hover:bg-gray-100' : 'bg-gray-200 cursor-not-allowed'}`}
-              disabled={selectedIds.length === 0 || gameWon}
-            >
-              Deselect All
-            </button>
-            <button 
-              onClick={shuffleNumbers}
-              className="border border-black bg-white hover:bg-gray-100 text-black font-bold py-2 px-4 rounded"
-              disabled={gameWon}
-            >
-              Shuffle
-            </button>
-          </div>
+            <div className="text-center mb-3">
+              <button 
+                onClick={handleSubmit}
+                className={`border border-black text-black font-bold py-2 px-4 rounded mr-2 ${selectedIds.length === 3 ? 'bg-white hover:bg-gray-100' : 'bg-gray-200 cursor-not-allowed'}`}
+                disabled={selectedIds.length !== 3 || gameWon}
+              >
+                Submit
+              </button>
+              <button 
+                onClick={() => setSelectedIds([])}
+                className={`border border-black text-black font-bold py-2 px-4 rounded mr-2 ${selectedIds.length > 0 ? 'bg-white hover:bg-gray-100' : 'bg-gray-200 cursor-not-allowed'}`}
+                disabled={selectedIds.length === 0 || gameWon}
+              >
+                Deselect All
+              </button>
+              <button 
+                onClick={shuffleNumbers}
+                className="border border-black bg-white hover:bg-gray-100 text-black font-bold py-2 px-4 rounded"
+                disabled={gameWon}
+              >
+                Shuffle
+              </button>
+            </div>
 
-          <div className="mt-3 grid grid-cols-1 gap-1">
-            {correctGuesses.map((guess, index) => (
-              <div key={index} className="p-2 bg-green-100 rounded-lg">
-                <p className="font-bold text-sm">{guess.date}</p>
-                <p className="text-xs">{guess.event}</p>
-              </div>
-            ))}
-          </div>
+            <div className="mt-3 grid grid-cols-1 gap-1">
+              {correctGuesses.map((guess, index) => (
+                <div key={index} className="p-2 bg-green-100 rounded-lg">
+                  <p className="font-bold text-sm">{guess.date}</p>
+                  <p className="text-xs">{guess.event}</p>
+                </div>
+              ))}
+            </div>
 
-          <p className="text-sm mt-4 text-center">New puzzles daily</p>
-        </>
-      )}
+            {renderNavigationButtons()}
+          </>
+        )}
 
-      <MenuOverlay isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
-      <HelpOverlay isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} />
+        <MenuOverlay isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
+        <HelpOverlay isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} />
+      </div>
+      <AdSpace position="right" />
     </div>
   );
 };
