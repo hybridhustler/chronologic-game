@@ -6,10 +6,8 @@ import { format, parseISO, startOfDay } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import './ChronologicGame.css';
 import { loadPuzzle } from './puzzleLoader';
-import AdSenseScriptLoader from './AdSenseScriptLoader';
-import AdUnit from './AdUnit';
 
-const MenuOverlay = ({ isOpen, onClose, darkMode, setDarkMode, gameMode, setGameMode }) => {
+const MenuOverlay = ({ isOpen, onClose, gameMode, setGameMode }) => {
   if (!isOpen) return null;
 
   const email = 'hybridhustlerarmy@gmail.com';
@@ -20,11 +18,11 @@ const MenuOverlay = ({ isOpen, onClose, darkMode, setDarkMode, gameMode, setGame
   ];
 
   return (
-    <div className={`fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4 ${darkMode ? 'dark' : ''}`}>
-      <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6 relative">
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+      <div className="bg-white rounded-lg max-w-md w-full p-6 relative">
         <button 
           onClick={onClose}
-          className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100"
+          className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
         >
           <XMarkIcon className="h-6 w-6" />
         </button>
@@ -34,73 +32,49 @@ const MenuOverlay = ({ isOpen, onClose, darkMode, setDarkMode, gameMode, setGame
             <li key={index}>
               <a 
                 href={`mailto:${email}?subject=${encodeURIComponent(link.subject)}`}
-                className="text-blue-500 hover:underline dark:text-blue-400"
+                className="text-blue-500 hover:underline"
               >
                 {link.name}
               </a>
             </li>
           ))}
         </ul>
-        
-        <div className="mt-4 flex items-center">
-          <span className="mr-2 text-gray-700 dark:text-gray-300">Dark Mode</span>
-          <label className="switch">
-            <input
-              type="checkbox"
-              checked={darkMode}
-              onChange={() => setDarkMode(prev => !prev)}
-            />
-            <span className="slider round"></span>
-          </label>
-        </div>
-
-        <div className="mt-4 flex items-center">
-          <span className="mr-2 text-gray-700 dark:text-gray-300">Game Mode</span>
-          <label className="switch">
-            <input
-              type="checkbox"
-              checked={gameMode === 'hard'}
-              onChange={() => setGameMode(prev => prev === 'normal' ? 'hard' : 'normal')}
-            />
-            <span className="slider round"></span>
-          </label>
-          <span className="ml-2 text-gray-700 dark:text-gray-300">{gameMode === 'hard' ? 'Hard' : 'Normal'}</span>
-        </div>
       </div>
     </div>
   );
 };
 
-const HelpOverlay = ({ isOpen, onClose, darkMode }) => {
+const HelpOverlay = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className={`fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4 ${darkMode ? 'dark' : ''}`}>
-      <div className="bg-white dark:bg-gray-800 rounded-lg max-w-xl w-full p-6 relative max-h-[100vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+      <div className="bg-white rounded-lg max-w-xl w-full p-6 relative max-h-[100vh] overflow-y-auto">
         <button 
           onClick={onClose}
-          className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100"
+          className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
         >
           <XMarkIcon className="h-6 w-6" />
         </button>
         
-        <div className="bg-gray-50 dark:bg-gray-700 p-8 rounded-xl shadow-lg max-w-3xl mx-auto">
-          <h2 className="text-3xl font-bold text-left text-black dark:text-white mb-4">
+        <div className="bg-gray-50 p-8 rounded-xl shadow-lg max-w-3xl mx-auto">
+          <h2 className="text-3xl font-bold text-left text-black mb-4">
             How to Play
             <br />
-            <span className="text-lg font-medium text-gray-700 dark:text-gray-300 block mt-2">
+            <span className="text-lg font-medium text-gray-700 block mt-2">
               Guess 4 historical dates in 6 tries
             </span>
           </h2>
 
-          <ul className="text-sm text-gray-700 dark:text-gray-300 space-y-2 mb-6">
+          <ul className="text-sm text-gray-700 space-y-2 mb-6">
             <li>Choose 3 numbers in the correct format (MM/DD/YY).</li>
             <li>Check out the theme of the day for a clue.</li>
             <li>In Normal mode, you'll get feedback on correct number positions.</li>
             <li>In Hard mode, you won't receive any feedback on number positions.</li>
+            <li><b>Maximum of 2 hints allowed. Use wisely!</b></li>
           </ul>
 
-          <h2 className="text-2xl font-bold text-black dark:text-white mb-4">Examples</h2>
+          <h2 className="text-2xl font-bold text-black mb-4">Examples</h2>
 
           <div className="space-y-6">
             <div className="text-left">
@@ -111,17 +85,13 @@ const HelpOverlay = ({ isOpen, onClose, darkMode }) => {
               <img src="example2.png" alt="Correct Example" className="w-full h-auto max-w-xs rounded-lg shadow-lg mx-auto" />
             </div>
           </div>
-
-          <p className="text-left text-gray-700 dark:text-gray-300 italic mt-6">
-            New puzzles daily
-          </p>
         </div>
       </div>
     </div>
   );
 };
 
-const GameCompletionScreen = ({ won, correctGuesses, correctDates, onShare, gameNumber, theme, darkMode }) => {
+const GameCompletionScreen = ({ won, correctGuesses, correctDates, onShare, gameNumber, theme }) => {
   const generateShareText = (correctGuessesCount) => {
     let emojiGrid = '';
     for (let i = 0; i < 4; i++) {
@@ -137,11 +107,12 @@ const GameCompletionScreen = ({ won, correctGuesses, correctDates, onShare, game
   const shareText = generateShareText(correctGuesses.length);
 
   return (
-    <div className={`${darkMode ? 'dark' : ''}`}>
-      <h2 className="text-2xl font-bold mb-4 dark:text-white">{won ? "Congratulations!" : "Better luck next time!"}</h2>
-      <p className="mb-4 dark:text-gray-300">{won ? "You've solved today's Chronologic puzzle!" : "Here are the correct answers:"}</p>
+    <div>
+      <p />
+      <h2 className="text-2xl font-bold mb-4">{won ? "Congratulations!" : "Better luck next time!"}</h2>
+      <p className="mb-4">{won ? "You've solved today's Chronologic puzzle!" : "Try again tomorrow for a new puzzle."}</p>
       
-      <pre className="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg mb-4 whitespace-pre-wrap dark:text-white">
+      <pre className="bg-gray-100 p-4 rounded-lg mb-4 whitespace-pre-wrap">
         {shareText}
       </pre>
 
@@ -153,21 +124,20 @@ const GameCompletionScreen = ({ won, correctGuesses, correctDates, onShare, game
         Share Results
       </button>
       
-      <h3 className="text-xl font-semibold mb-2 dark:text-white">Correct Answers:</h3>
+      <h3 className="text-xl font-semibold mb-2">Correct Answers:</h3>
       {(won ? correctGuesses : correctDates).map((date, index) => (
         <div key={index} className="mb-4">
-          <p className="font-bold dark:text-white">{date.date}</p>
-          <p className="dark:text-gray-300">{date.event}</p>
-          <a href={date.link} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline dark:text-blue-400">Learn more</a>
-          <img src={date.photo} alt={date.event} className="mt-2 w-full rounded" />
+          <p className="font-bold">{date.date}</p>
+          <p>{date.event}</p>
+          <a href={date.link} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Learn more</a>
         </div>
       ))}
     </div>
   );
 };
 
-const Footer = ({ darkMode }) => (
-  <footer className="mt-8 text-center text-sm text-gray-600 dark:text-gray-400">
+const Footer = () => (
+  <footer className="mt-8 text-center text-sm text-gray-600">
     <p>&copy; {new Date().getFullYear()} Scafs Enterprises. All rights reserved.</p>
     <div className="mt-2">
       <a href="/terms" className="hover:underline mr-4">Terms of Service</a>
@@ -175,6 +145,41 @@ const Footer = ({ darkMode }) => (
     </div>
   </footer>
 );
+
+const ModeToggle = ({ gameMode, setGameMode }) => {
+  return (
+    <div className="flex items-center">
+      <span className="mr-2 text-sm">Mode: <b>{gameMode === 'hard' ? 'Hard' : 'Normal'}</b></span>
+      <label className="switch">
+        <input
+          type="checkbox"
+          checked={gameMode === 'hard'}
+          onChange={() => setGameMode(prev => prev === 'normal' ? 'hard' : 'normal')}
+        />
+        <span className="slider round"></span>
+      </label>
+    </div>
+  );
+};
+
+const HintOverlay = ({ isOpen, onClose, hint }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+      <div className="bg-white rounded-lg max-w-md w-full p-6 relative">
+        <button 
+          onClick={onClose}
+          className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+        >
+          <XMarkIcon className="h-6 w-6" />
+        </button>
+        <h2 className="text-2xl font-bold mb-4">Hint</h2>
+        <p className="text-lg">{hint}</p>
+      </div>
+    </div>
+  );
+};
 
 const ChronologicGame = () => {
   const [numbers, setNumbers] = useState([]);
@@ -187,11 +192,13 @@ const ChronologicGame = () => {
   const [gameNumber, setGameNumber] = useState('');
   const [isWiggling, setIsWiggling] = useState(false);
   const [submissionStatus, setSubmissionStatus] = useState(null);
+  const [hintsUsed, setHintsUsed] = useState(0);
+  const [isHintOpen, setIsHintOpen] = useState(false);
+  const [currentHint, setCurrentHint] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [showConfetti, setShowConfetti] = useState(false);
   const [correctNumbers, setCorrectNumbers] = useState([]);
   const [incorrectNumbers, setIncorrectNumbers] = useState([]);
-  const [showIntro, setShowIntro] = useState(false);
   const [puzzle, setPuzzle] = useState(null);
   const [currentDate, setCurrentDate] = useState(() => {
     const now = new Date();
@@ -202,16 +209,29 @@ const ChronologicGame = () => {
     const estNow = toZonedTime(now, 'America/New_York');
     return format(startOfDay(estNow), 'yyyy-MM-dd');
   });
-  const [darkMode, setDarkMode] = useState(() => {
-    const savedMode = localStorage.getItem('darkMode');
-    return savedMode ? JSON.parse(savedMode) : false;
-  });
   const [gameMode, setGameMode] = useState(() => {
     const savedMode = localStorage.getItem('gameMode');
     return savedMode || 'normal';
   });
-  const [feedbackColors, setFeedbackColors] = useState([]);
   const [error, setError] = useState(null);
+
+  const getHint = () => {
+    if (hintsUsed >= 2 || correctGuesses.length === 4) {
+      alert("No more hints available!");
+      return;
+    }
+
+    const unguessedDates = puzzle.correctDates.filter(date => 
+      !correctGuesses.some(guess => guess.date === date.date)
+    );
+
+    if (unguessedDates.length > 0) {
+      const randomHint = unguessedDates[Math.floor(Math.random() * unguessedDates.length)].hint;
+      setCurrentHint(randomHint);
+      setIsHintOpen(true);
+      setHintsUsed(hintsUsed + 1);
+    }
+  };
 
   useEffect(() => {
     const loadGameState = async () => {
@@ -249,15 +269,6 @@ const ChronologicGame = () => {
 
     loadGameState();
   }, [selectedDate]);
-
-  useEffect(() => {
-    localStorage.setItem('darkMode', JSON.stringify(darkMode));
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [darkMode]);
 
   useEffect(() => {
     localStorage.setItem('gameMode', gameMode);
@@ -357,11 +368,11 @@ const ChronologicGame = () => {
   };
 
   const getNumberStyle = (id, used) => {
-    if (used) return 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed';
-    if (correctNumbers.includes(id)) return 'bg-green-500 dark:bg-green-700 glow-green';
-    if (incorrectNumbers.includes(id)) return 'bg-red-500 dark:bg-red-700 glow-red';
-    if (selectedIds.includes(id)) return 'bg-yellow-300 dark:bg-yellow-600';
-    return 'bg-yellow-50 dark:bg-yellow-900 hover:bg-yellow-100 dark:hover:bg-yellow-800';
+    if (used) return 'bg-gray-400 cursor-not-allowed';
+    if (correctNumbers.includes(id)) return 'bg-green-500 glow-green';
+    if (incorrectNumbers.includes(id)) return 'bg-red-500 glow-red';
+    if (selectedIds.includes(id)) return 'bg-yellow-300';
+    return 'bg-yellow-50 hover:bg-yellow-100';
   };
 
   const shuffleNumbers = () => {
@@ -424,20 +435,20 @@ const ChronologicGame = () => {
         {!isEarliestDate && (
           <button
             onClick={() => changeDate(-1)}
-            className="text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+            className="text-blue-500 hover:text-blue-700"
             aria-label="Previous day"
           >
             <ArrowLeftIcon className="h-6 w-6" />
           </button>
         )}
         {isEarliestDate && <div className="w-6"></div>}
-        <span className="text-sm text-gray-600 dark:text-gray-400">
+        <span className="text-sm text-gray-600">
           {format(currentDate, 'MMMM d, yyyy')}
         </span>
         {!isTodayOrFuture && (
           <button
             onClick={() => changeDate(1)}
-            className="text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+            className="text-blue-500 hover:text-blue-700"
             aria-label="Next day"
           >
             <ArrowRightIcon className="h-6 w-6" />
@@ -448,152 +459,134 @@ const ChronologicGame = () => {
     );
   };
 
-  const toggleDarkMode = () => {
-    setDarkMode(prevMode => !prevMode);
-  };
-
   return (
-    <>
-      <AdSenseScriptLoader />
-      <div className={`flex flex-col justify-between min-h-screen p-4 ${darkMode ? 'dark' : ''}`}>
-        <div className="bg-white dark:bg-gray-900 min-h-screen">
-          <div className="flex justify-center items-start">
-            <div className="hidden lg:block w-64 mr-4">
-              <AdUnit />
-            </div>
-            <div className="w-full max-w-md">
-              {showConfetti && <Confetti />}
-              
-              <div className="flex justify-between mb-2">
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                  Mode: {gameMode === 'hard' ? 'Hard' : 'Normal'}
-                </span>
-                <button onClick={toggleDarkMode} className="p-2 rounded-full bg-gray-200 dark:bg-gray-700">
-                  <LightBulbIcon className="h-6 w-6 text-gray-800 dark:text-gray-200" />
-                </button>
-              </div>
-              
-              {isLoading ? (
-                <div className="flex justify-center items-center h-64">
-                  <ClipLoader color={darkMode ? "#ffffff" : "#123abc"} loading={isLoading} size={50} />
-                </div>
-              ) : error ? (
-                <div className="text-center text-red-500 dark:text-red-400">
-                  <p>Failed to load puzzle: {error}</p>
-                  <p>Please try again later or contact support if the problem persists.</p>
-                </div>
-              ) : puzzle ? (
-                gameWon || incorrectGuessesLeft === 0 ? (
-                  <GameCompletionScreen 
-                    won={gameWon}
-                    correctGuesses={correctGuesses}
-                    correctDates={puzzle.correctDates}
-                    onShare={handleShare}
-                    gameNumber={gameNumber}
-                    theme={puzzle.theme}
-                    darkMode={darkMode}
-                  />
-                ) : (
-                  <>
-                    <h1 className="text-4xl font-bold text-center chronologic-font mb-2 text-black dark:text-white">Chronologic</h1>
-                    <p className="text-2xl text-center game-number-display mb-2 text-gray-700 dark:text-gray-300">Game #{gameNumber}</p>
-                    <p className="text-lg mb-3 text-center italic font-bold text-black dark:text-white border-2 border-gray-300 dark:border-gray-700 p-2 rounded-lg bg-gray-100 dark:bg-gray-800">{puzzle.theme}</p>
-                    <div className="flex justify-center mb-3">
-                      {[...Array(6)].map((_, index) => (
-                        <div 
-                          key={index} 
-                          className={`w-3 h-3 mx-1 ${index < incorrectGuessesLeft ? 'bg-gray-300 dark:bg-gray-600' : 'bg-transparent border border-gray-300 dark:border-gray-600'}`}
-                        ></div>
-                      ))}
-                    </div>
-                    
-                    <div className={`grid grid-cols-3 gap-2 mb-3 ${isWiggling ? 'wiggle' : ''} ${
-      submissionStatus === 'correct' ? 'correct-answer' : 
-      submissionStatus === 'incorrect' ? 'incorrect-answer' : ''
-    }`}>
-      {numbers.map(({ id, value, used }) => (
-        <button
-          key={id}
-          onClick={() => !used && handleNumberClick(id)}
-          className={`w-full aspect-square text-black dark:text-white text-2xl font-bold rounded relative ${getNumberStyle(id, used)}`}
-          disabled={used || gameWon || correctNumbers.includes(id)}
-        >
-          {value}
-          {selectedIds.includes(id) && (
-            <span className="absolute bottom-1 right-1 text-xs text-gray-500 dark:text-gray-400">
-              {getDatePartLabel(selectedIds.indexOf(id))}
-            </span>
-          )}
-        </button>
-      ))}
-    </div>
-
-                    <div className="text-center mb-3">
-                      <button 
-                        onClick={handleSubmit}
-                        className={`border border-black dark:border-white text-black dark:text-white font-bold py-2 px-4 rounded mr-2 ${selectedIds.length === 3 ? 'bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700' : 'bg-gray-200 dark:bg-gray-700 cursor-not-allowed'}`}
-                        disabled={selectedIds.length !== 3 || gameWon}
-                      >
-                        Submit
-                      </button>
-                      <button 
-                        onClick={() => setSelectedIds([])}
-                        className={`border border-black dark:border-white text-black dark:text-white font-bold py-2 px-4 rounded mr-2 ${selectedIds.length > 0 ? 'bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700' : 'bg-gray-200 dark:bg-gray-700 cursor-not-allowed'}`}
-                        disabled={selectedIds.length === 0 || gameWon}
-                      >
-                        Deselect All
-                      </button>
-                      <button 
-                        onClick={shuffleNumbers}
-                        className="border border-black dark:border-white bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-black dark:text-white font-bold py-2 px-4 rounded"
-                        disabled={gameWon}
-                      >
-                        Shuffle
-                      </button>
-                    </div>
-
-                    <div className="mt-3 grid grid-cols-1 gap-1">
-                      {correctGuesses.map((guess, index) => (
-                        <div key={index} className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-                          <p className="font-bold text-sm text-black dark:text-white">{guess.date}</p>
-                          <p className="text-xs text-gray-700 dark:text-gray-300">{guess.event}</p>
-                        </div>
-                      ))}
-                    </div>
-
-                    {renderNavigationButtons()}
-                  </>
-                )
-              ) : null}
-            </div>
-            <div className="hidden lg:block w-64 ml-4">
-              <AdUnit />
-            </div>
-          </div>
-          
-          <div className="flex justify-between mt-4">
-            <button onClick={() => setIsMenuOpen(true)} className="bg-red-500 text-white dark:bg-red-700 dark:text-gray-200 rounded-full p-2">
-              <WrenchIcon className="h-6 w-6" />
-            </button>
-            <button onClick={() => setIsHelpOpen(true)} className="bg-blue-500 text-white dark:bg-blue-700 dark:text-gray-200 rounded-full p-2">
+    <div className="flex flex-col justify-between min-h-screen p-4">
+      <div className="bg-white min-h-screen">
+        <div className="top-bar">
+          <h1 className="text-2xl font-bold chronologic-font">Chronologic</h1>
+          <div className="top-controls">
+            <ModeToggle gameMode={gameMode} setGameMode={setGameMode} />
+            <button onClick={() => setIsHelpOpen(true)} className="text-blue-500 hover:text-blue-700">
               <QuestionMarkCircleIcon className="h-6 w-6" />
             </button>
+            <button onClick={getHint} className="text-yellow-500 hover:text-yellow-700" disabled={hintsUsed >= 2 || correctGuesses.length === 4}>
+              <LightBulbIcon className="h-6 w-6" />
+            </button>
+            <button onClick={() => setIsMenuOpen(true)} className="text-red-500 hover:text-red-700">
+              <WrenchIcon className="h-6 w-6" />
+            </button>
           </div>
-
-          <Footer darkMode={darkMode} />
-
-          <MenuOverlay 
-            isOpen={isMenuOpen} 
-            onClose={() => setIsMenuOpen(false)} 
-            darkMode={darkMode} 
-            setDarkMode={toggleDarkMode}
-            gameMode={gameMode}
-            setGameMode={setGameMode}
-          />
-          <HelpOverlay isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} darkMode={darkMode} />
         </div>
+
+        <div className="flex justify-center items-start">
+          <div className="w-full max-w-md">
+            {showConfetti && <Confetti />}
+            
+            {isLoading ? (
+              <div className="flex justify-center items-center h-64">
+                <ClipLoader color="#123abc" loading={isLoading} size={50} />
+              </div>
+            ) : error ? (
+              <div className="text-center text-red-500">
+                <p>Failed to load puzzle: {error}</p>
+                <p>Please try again later or contact support if the problem persists.</p>
+              </div>
+            ) : puzzle ? (
+              gameWon || incorrectGuessesLeft === 0 ? (
+                <GameCompletionScreen 
+                  won={gameWon}
+                  correctGuesses={correctGuesses}
+                  correctDates={puzzle.correctDates}
+                  onShare={handleShare}
+                  gameNumber={gameNumber}
+                  theme={puzzle.theme}
+                />
+              ) : (
+                <>
+                  <p className="text-sm text-right game-number-display mb-2 text-gray-700">#<b>{gameNumber}</b></p>
+                  <p className="text-lg mb-3 text-center italic font-bold text-black border-2 border-gray-300 p-2 rounded-lg bg-gray-100">{puzzle.theme}</p>
+                  <div className="flex justify-center mb-3">
+                    {[...Array(6)].map((_, index) => (
+                      <div 
+                        key={index} 
+                        className={`w-3 h-3 mx-1 ${index < incorrectGuessesLeft ? 'bg-gray-300' : 'bg-transparent border border-gray-300'}`}
+                      ></div>
+                    ))}
+                  </div>
+                  
+                  <div className={`grid grid-cols-3 gap-2 mb-3 ${isWiggling ? 'wiggle' : ''} ${
+                    submissionStatus === 'correct' ? 'correct-answer' : 
+                    submissionStatus === 'incorrect' ? 'incorrect-answer' : ''
+                  } ${incorrectGuessesLeft === 1 ? 'last-guess' : ''}`}>
+                    {numbers.map(({ id, value, used }) => (
+                      <button
+                        key={id}
+                        onClick={() => !used && handleNumberClick(id)}
+                        className={`w-full aspect-square text-black text-2xl font-bold rounded relative ${getNumberStyle(id, used)}`}
+                        disabled={used || gameWon || correctNumbers.includes(id)}
+                      >
+                        {value}
+                        {selectedIds.includes(id) && (
+                          <span className="absolute bottom-1 right-1 text-xs text-gray-500">
+                            {getDatePartLabel(selectedIds.indexOf(id))}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="text-center mb-3">
+                    <button 
+                      onClick={handleSubmit}
+                      className={`border border-black text-black font-bold py-2 px-4 rounded mr-2 ${selectedIds.length === 3 ? 'bg-white hover:bg-gray-100' : 'bg-gray-200 cursor-not-allowed'}`}
+                      disabled={selectedIds.length !== 3 || gameWon}
+                    >
+                      Submit
+                    </button>
+                    <button 
+                      onClick={() => setSelectedIds([])}
+                      className={`border border-black text-black font-bold py-2 px-4 rounded mr-2 ${selectedIds.length > 0 ? 'bg-white hover:bg-gray-100' : 'bg-gray-200 cursor-not-allowed'}`}
+                      disabled={selectedIds.length === 0 || gameWon}
+                    >
+                      Deselect All
+                    </button>
+                    <button 
+                      onClick={shuffleNumbers}
+                      className="border border-black bg-white hover:bg-gray-100 text-black font-bold py-2 px-4 rounded"
+                      disabled={gameWon}
+                    >
+                      Shuffle
+                    </button>
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-1 gap-1">
+                    {correctGuesses.map((guess, index) => (
+                      <div key={index} className="p-2 bg-green-100 rounded-lg">
+                        <p className="font-bold text-sm text-black">{guess.date}</p>
+                        <p className="text-xs text-gray-700">{guess.event}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {renderNavigationButtons()}
+                </>
+              )
+            ) : null}
+          </div>
+        </div>
+        
+        <Footer />
+
+        <MenuOverlay 
+          isOpen={isMenuOpen} 
+          onClose={() => setIsMenuOpen(false)} 
+          gameMode={gameMode}
+          setGameMode={setGameMode}
+        />
+        <HelpOverlay isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} />
+        <HintOverlay isOpen={isHintOpen} onClose={() => setIsHintOpen(false)} hint={currentHint} />
       </div>
-    </>
+    </div>
   );
 };
 

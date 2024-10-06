@@ -14,34 +14,56 @@
 
 /* Base styles */
 body {
-  @apply bg-white text-black transition-colors duration-200 ease-in-out;
-}
-
-.dark body {
-  @apply bg-gray-900 text-white;
+  @apply bg-white text-black transition-colors duration-200 ease-in-out m-0 p-0 box-border;
+  font-family: 'Roboto', sans-serif;
 }
 
 /* Game title */
 .chronologic-font {
   font-family: 'ChronologicFont', sans-serif;
+  color: #FF6600;
+  font-size: 2.8rem;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* Glow effect for correct numbers in normal mode */
+/* Game container layout */
+.game-container {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Responsive layout */
+@media (min-width: 768px) {
+  .game-container {
+    width: 33.333%;
+    max-width: none;
+  }
+}
+
+/* Glow effects */
 .glow-green {
   box-shadow: 0 0 10px #4CAF50, 0 0 20px #4CAF50, 0 0 30px #4CAF50;
-  animation: glow 1s ease-in-out infinite alternate;
+  animation: glow-green 1s ease-in-out infinite alternate;
 }
 
-@keyframes glow {
-  from {
-    box-shadow: 0 0 10px #4CAF50, 0 0 20px #4CAF50, 0 0 30px #4CAF50;
-  }
-  to {
-    box-shadow: 0 0 20px #4CAF50, 0 0 30px #4CAF50, 0 0 40px #4CAF50;
-  }
+@keyframes glow-green {
+  from { box-shadow: 0 0 10px #4CAF50, 0 0 20px #4CAF50, 0 0 30px #4CAF50; }
+  to { box-shadow: 0 0 20px #4CAF50, 0 0 30px #4CAF50, 0 0 40px #4CAF50; }
 }
 
-/* Wiggle animation for incorrect guesses */
+.glow-red {
+  box-shadow: 0 0 10px #FF5252, 0 0 20px #FF5252, 0 0 30px #FF5252;
+  animation: glow-red 1s ease-in-out infinite alternate;
+}
+
+@keyframes glow-red {
+  from { box-shadow: 0 0 10px #FF5252, 0 0 20px #FF5252, 0 0 30px #FF5252; }
+  to { box-shadow: 0 0 20px #FF5252, 0 0 30px #FF5252, 0 0 40px #FF5252; }
+}
+
+/* Animations */
 .wiggle {
   animation: wiggle 0.5s ease-in-out;
 }
@@ -52,7 +74,7 @@ body {
   75% { transform: translateX(5px); }
 }
 
-/* Styles for the mode toggle switch */
+/* Toggle switch */
 .switch {
   position: relative;
   display: inline-block;
@@ -100,7 +122,7 @@ input:checked + .slider:before {
 
 /* Button styles */
 .btn {
-  @apply font-bold py-2 px-4 rounded transition duration-200 ease-in-out;
+  @apply font-bold py-2 px-4 rounded transition duration-200 ease-in-out m-1;
 }
 
 .btn-primary {
@@ -119,39 +141,25 @@ input:checked + .slider:before {
   @apply bg-gray-400;
 }
 
-/* Dark mode specific styles */
-.dark .btn-primary {
-  @apply bg-blue-700 text-white;
-}
-
-.dark .btn-primary:hover {
-  @apply bg-blue-900;
-}
-
-.dark .btn-secondary {
-  @apply bg-gray-700 text-white;
-}
-
-.dark .btn-secondary:hover {
-  @apply bg-gray-600;
-}
-
 /* Number grid styles */
 .number-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 0.5rem;
+  margin-bottom: 1rem;
 }
 
 .number-button {
   @apply w-full aspect-square text-2xl font-bold rounded relative transition duration-200 ease-in-out;
+  height: 0;
+  padding-bottom: 100%;
 }
 
-/* Responsive design */
-@media (max-width: 640px) {
-  .number-button {
-    @apply text-xl;
-  }
+.number-button span {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 /* Correct and incorrect answer animations */
@@ -179,28 +187,9 @@ input:checked + .slider:before {
   @apply text-lg mb-3 text-center italic font-bold border-2 p-2 rounded-lg;
 }
 
-.dark .theme-display {
-  @apply border-gray-700 bg-gray-800;
-}
-
 /* Footer styles */
 footer {
   @apply mt-8 text-center text-sm text-gray-600;
-}
-
-.dark footer {
-  @apply text-gray-400;
-}
-
-/* Ad space styles */
-.ad-space {
-  @apply w-64 h-full;
-}
-
-@media (max-width: 1023px) {
-  .ad-space {
-    display: none;
-  }
 }
 
 /* Overlay styles */
@@ -209,17 +198,71 @@ footer {
 }
 
 .overlay-content {
-  @apply bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6 relative;
+  @apply bg-white rounded-lg max-w-md w-full p-6 relative;
 }
 
 /* Help content styles */
 .help-content {
-  @apply bg-gray-50 dark:bg-gray-700 p-8 rounded-xl shadow-lg max-w-3xl mx-auto;
+  @apply bg-gray-50 p-8 rounded-xl shadow-lg max-w-3xl mx-auto;
 }
 
 /* Navigation button styles */
 .nav-button {
-  @apply text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300;
+  @apply text-blue-500 hover:text-blue-700;
+}
+
+/* Top bar styles */
+.top-bar {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem 0;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: center;
+}
+
+.top-bar h1 {
+  margin: 0 0 1rem 0;
+}
+
+.top-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Mode toggle styles */
+.mode-toggle {
+  display: flex;
+  align-items: center;
+  font-size: 0.875rem;
+}
+
+.mode-toggle span {
+  margin-right: 0.5rem;
+}
+
+/* Last guess pulse effect */
+.last-guess {
+  animation: lastGuessPulse 2s infinite;
+}
+
+@keyframes lastGuessPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.4); }
+  50% { box-shadow: 0 0 0 20px rgba(255, 0, 0, 0); }
+}
+
+/* Remove white border */
+* {
+  @apply border-0;
+}
+
+/* Game number display */
+.game-number-display {
+  @apply text-2xl font-bold;
+  padding-top: 10px;
+  color: rgb(88, 87, 87);
 }
 
 /* Confetti container */
@@ -233,30 +276,93 @@ footer {
   z-index: 1000;
 }
 
-.glow-green {
-  box-shadow: 0 0 10px #4CAF50, 0 0 20px #4CAF50, 0 0 30px #4CAF50;
-  animation: glow-green 1s ease-in-out infinite alternate;
+/* Loader styles */
+.loader-container {
+  @apply flex justify-center items-center h-64;
 }
 
-@keyframes glow-green {
-  from {
-    box-shadow: 0 0 10px #4CAF50, 0 0 20px #4CAF50, 0 0 30px #4CAF50;
+/* Error message styles */
+.error-message {
+  @apply text-center text-red-500;
+}
+
+/* Correct guesses display */
+.correct-guesses {
+  @apply mt-3 grid grid-cols-1 gap-1;
+}
+
+.correct-guess-item {
+  @apply p-2 bg-green-100 rounded-lg;
+}
+
+/* Navigation buttons container */
+.navigation-buttons {
+  @apply flex justify-between items-center mt-4;
+}
+
+/* Ensure buttons are clickable and visible */
+button {
+  @apply cursor-pointer opacity-100;
+}
+
+button:disabled {
+  @apply cursor-not-allowed opacity-50;
+}
+
+/* Responsive styles for larger screens */
+@media (min-width: 640px) {
+  .top-bar {
+    flex-direction: row;
+    justify-content: space-between;
   }
-  to {
-    box-shadow: 0 0 20px #4CAF50, 0 0 30px #4CAF50, 0 0 40px #4CAF50;
+
+  .top-bar h1 {
+    margin: 0;
   }
 }
 
-.glow-red {
-  box-shadow: 0 0 10px #FF5252, 0 0 20px #FF5252, 0 0 30px #FF5252;
-  animation: glow-red 1s ease-in-out infinite alternate;
+/* Responsive styles for smaller screens */
+@media (max-width: 639px) {
+  .top-controls {
+    margin-top: 1rem;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .mode-toggle {
+    font-size: 0.75rem;
+  }
+
+  .switch {
+    width: 50px;
+    height: 28px;
+  }
+
+  .slider:before {
+    height: 22px;
+    width: 22px;
+  }
+
+  input:checked + .slider:before {
+    transform: translateX(22px);
+  }
+
+  .number-button {
+    @apply text-xl;
+  }
+  
+  .chronologic-font {
+    font-size: 1.5rem;
+  }
 }
 
-@keyframes glow-red {
-  from {
-    box-shadow: 0 0 10px #FF5252, 0 0 20px #FF5252, 0 0 30px #FF5252;
+/* Overlay responsive styles */
+@media (max-width: 640px) {
+  .overlay-content {
+    max-width: 90%;
   }
-  to {
-    box-shadow: 0 0 20px #FF5252, 0 0 30px #FF5252, 0 0 40px #FF5252;
+
+  .help-content {
+    padding: 1rem;
   }
 }
