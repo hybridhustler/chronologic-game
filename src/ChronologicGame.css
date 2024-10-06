@@ -1,5 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom font for the game title */
 @font-face {
   font-family: 'ChronologicFont';
   src: url('/src/ChronologicFont.ttf') format('truetype');
@@ -7,126 +12,47 @@
   font-style: normal;
 }
 
+/* Base styles */
+body {
+  @apply bg-white text-black transition-colors duration-200 ease-in-out;
+}
+
+.dark body {
+  @apply bg-gray-900 text-white;
+}
+
+/* Game title */
 .chronologic-font {
   font-family: 'ChronologicFont', sans-serif;
 }
 
-.date-display {
-  font-family: 'Roboto', sans-serif;
-  font-weight: 700;
-  font-size: 0.875rem;
+/* Glow effect for correct numbers in normal mode */
+.glow-green {
+  box-shadow: 0 0 10px #4CAF50, 0 0 20px #4CAF50, 0 0 30px #4CAF50;
+  animation: glow 1s ease-in-out infinite alternate;
 }
 
+@keyframes glow {
+  from {
+    box-shadow: 0 0 10px #4CAF50, 0 0 20px #4CAF50, 0 0 30px #4CAF50;
+  }
+  to {
+    box-shadow: 0 0 20px #4CAF50, 0 0 30px #4CAF50, 0 0 40px #4CAF50;
+  }
+}
+
+/* Wiggle animation for incorrect guesses */
 .wiggle {
-  animation: wiggle 0.5s ease;
+  animation: wiggle 0.5s ease-in-out;
 }
 
 @keyframes wiggle {
-  0% { transform: rotate(0deg); }
-  25% { transform: rotate(3deg); }
-  50% { transform: rotate(0eg); }
-  75% { transform: rotate(-3deg); }
-  100% { transform: rotate(0deg); }
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
 }
 
-.correct-answer {
-  animation: correct-border 1s ease;
-}
-
-@keyframes correct-border {
-  0%, 100% { border: 2px solid transparent; }
-  50% { border: 2px solid #22c55e; }
-}
-
-.incorrect-answer {
-  animation: incorrect-border 1s ease;
-}
-
-@keyframes incorrect-border {
-  0%, 100% { border: 2px solid transparent; }
-  50% { border: 2px solid #ef4444; }
-}
-
-.container {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.25rem;
-}
-
-.aspect-square {
-  aspect-ratio: 1 / 1;
-}
-
-@media (max-width: 640px) {
-  .container {
-    padding: 0.5rem;
-  }
-
-  .text-2xl {
-    font-size: 1.25rem;
-  }
-
-  .text-lg {
-    font-size: 1rem;
-  }
-
-  .text-sm {
-    font-size: 0.75rem;
-  }
-
-  .text-xs {
-    font-size: 0.625rem;
-  }
-}
-
-button {
-  transition: all 0.3s ease;
-}
-
-button:hover:not(:disabled) {
-  transform: scale(1.05);
-}
-
-button:disabled {
-  opacity: 0.5;
-}
-
-.bg-green-100 {
-  background-color: #dcfce7;
-}
-
-.max-w-md {
-  max-width: 28rem;
-}
-
-.rounded {
-  border-radius: 0.25rem;
-}
-
-.font-bold {
-  font-weight: 700;
-}
-
-.text-center {
-  text-align: center;
-}
-
-.italic {
-  font-style: italic;
-}
-
-/* Dark mode styles */
-.dark {
-  color-scheme: dark;
-}
-
-/* Toggle switch styles */
+/* Styles for the mode toggle switch */
 .switch {
   position: relative;
   display: inline-block;
@@ -149,6 +75,7 @@ button:disabled {
   bottom: 0;
   background-color: #ccc;
   transition: .4s;
+  border-radius: 34px;
 }
 
 .slider:before {
@@ -160,6 +87,7 @@ button:disabled {
   bottom: 4px;
   background-color: white;
   transition: .4s;
+  border-radius: 50%;
 }
 
 input:checked + .slider {
@@ -170,10 +98,165 @@ input:checked + .slider:before {
   transform: translateX(26px);
 }
 
-.slider.round {
-  border-radius: 34px;
+/* Button styles */
+.btn {
+  @apply font-bold py-2 px-4 rounded transition duration-200 ease-in-out;
 }
 
-.slider.round:before {
-  border-radius: 50%;
+.btn-primary {
+  @apply bg-blue-500 text-white;
+}
+
+.btn-primary:hover {
+  @apply bg-blue-700;
+}
+
+.btn-secondary {
+  @apply bg-gray-300 text-black;
+}
+
+.btn-secondary:hover {
+  @apply bg-gray-400;
+}
+
+/* Dark mode specific styles */
+.dark .btn-primary {
+  @apply bg-blue-700 text-white;
+}
+
+.dark .btn-primary:hover {
+  @apply bg-blue-900;
+}
+
+.dark .btn-secondary {
+  @apply bg-gray-700 text-white;
+}
+
+.dark .btn-secondary:hover {
+  @apply bg-gray-600;
+}
+
+/* Number grid styles */
+.number-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.number-button {
+  @apply w-full aspect-square text-2xl font-bold rounded relative transition duration-200 ease-in-out;
+}
+
+/* Responsive design */
+@media (max-width: 640px) {
+  .number-button {
+    @apply text-xl;
+  }
+}
+
+/* Correct and incorrect answer animations */
+.correct-answer {
+  animation: correctPulse 0.5s ease-in-out;
+}
+
+.incorrect-answer {
+  animation: incorrectShake 0.5s ease-in-out;
+}
+
+@keyframes correctPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@keyframes incorrectShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+/* Theme display */
+.theme-display {
+  @apply text-lg mb-3 text-center italic font-bold border-2 p-2 rounded-lg;
+}
+
+.dark .theme-display {
+  @apply border-gray-700 bg-gray-800;
+}
+
+/* Footer styles */
+footer {
+  @apply mt-8 text-center text-sm text-gray-600;
+}
+
+.dark footer {
+  @apply text-gray-400;
+}
+
+/* Ad space styles */
+.ad-space {
+  @apply w-64 h-full;
+}
+
+@media (max-width: 1023px) {
+  .ad-space {
+    display: none;
+  }
+}
+
+/* Overlay styles */
+.overlay {
+  @apply fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4;
+}
+
+.overlay-content {
+  @apply bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6 relative;
+}
+
+/* Help content styles */
+.help-content {
+  @apply bg-gray-50 dark:bg-gray-700 p-8 rounded-xl shadow-lg max-w-3xl mx-auto;
+}
+
+/* Navigation button styles */
+.nav-button {
+  @apply text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300;
+}
+
+/* Confetti container */
+.confetti-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.glow-green {
+  box-shadow: 0 0 10px #4CAF50, 0 0 20px #4CAF50, 0 0 30px #4CAF50;
+  animation: glow-green 1s ease-in-out infinite alternate;
+}
+
+@keyframes glow-green {
+  from {
+    box-shadow: 0 0 10px #4CAF50, 0 0 20px #4CAF50, 0 0 30px #4CAF50;
+  }
+  to {
+    box-shadow: 0 0 20px #4CAF50, 0 0 30px #4CAF50, 0 0 40px #4CAF50;
+  }
+}
+
+.glow-red {
+  box-shadow: 0 0 10px #FF5252, 0 0 20px #FF5252, 0 0 30px #FF5252;
+  animation: glow-red 1s ease-in-out infinite alternate;
+}
+
+@keyframes glow-red {
+  from {
+    box-shadow: 0 0 10px #FF5252, 0 0 20px #FF5252, 0 0 30px #FF5252;
+  }
+  to {
+    box-shadow: 0 0 20px #FF5252, 0 0 30px #FF5252, 0 0 40px #FF5252;
+  }
 }
