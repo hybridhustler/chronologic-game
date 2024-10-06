@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { WrenchIcon, QuestionMarkCircleIcon, ShareIcon, XMarkIcon, ArrowLeftIcon, ArrowRightIcon, LightBulbIcon } from '@heroicons/react/24/outline';
+import { WrenchIcon, QuestionMarkCircleIcon, ShareIcon, XMarkIcon, ArrowLeftIcon, ArrowRightIcon, LightBulbIcon, FireIcon, ChartBarIcon } from '@heroicons/react/24/outline';
 import { ClipLoader } from 'react-spinners';
 import Confetti from 'react-confetti';
 import { format, parseISO, startOfDay } from 'date-fns';
@@ -39,6 +39,19 @@ const MenuOverlay = ({ isOpen, onClose, gameMode, setGameMode }) => {
             </li>
           ))}
         </ul>
+
+        <div className="mt-4 flex items-center">
+          <span className="mr-2 text-gray-700">Game Mode</span>
+          <label className="switch">
+            <input
+              type="checkbox"
+              checked={gameMode === 'hard'}
+              onChange={() => setGameMode(prev => prev === 'normal' ? 'hard' : 'normal')}
+            />
+            <span className="slider round"></span>
+          </label>
+          <span className="ml-2 text-gray-700">{gameMode === 'hard' ? 'Hard' : 'Normal'}</span>
+        </div>
       </div>
     </div>
   );
@@ -71,7 +84,7 @@ const HelpOverlay = ({ isOpen, onClose }) => {
             <li>Check out the theme of the day for a clue.</li>
             <li>In Normal mode, you'll get feedback on correct number positions.</li>
             <li>In Hard mode, you won't receive any feedback on number positions.</li>
-            <li><b>Maximum of 2 hints allowed. Use wisely!</b></li>
+            <li><b>You only get 2 hints per game. Play wisely!</b></li>
           </ul>
 
           <h2 className="text-2xl font-bold text-black mb-4">Examples</h2>
@@ -85,6 +98,51 @@ const HelpOverlay = ({ isOpen, onClose }) => {
               <img src="example2.png" alt="Correct Example" className="w-full h-auto max-w-xs rounded-lg shadow-lg mx-auto" />
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const HintOverlay = ({ isOpen, onClose, hint }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+      <div className="bg-white rounded-lg max-w-md w-full p-6 relative">
+        <button 
+          onClick={onClose}
+          className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+        >
+          <XMarkIcon className="h-6 w-6" />
+        </button>
+        <h2 className="text-2xl font-bold mb-4">Hint</h2>
+        <p className="text-lg">{hint}</p>
+      </div>
+    </div>
+  );
+};
+
+const StatisticsOverlay = ({ isOpen, onClose, stats }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+      <div className="bg-white rounded-lg max-w-md w-full p-6 relative">
+        <button 
+          onClick={onClose}
+          className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+        >
+          <XMarkIcon className="h-6 w-6" />
+        </button>
+        <h2 className="text-2xl font-bold mb-4">Statistics</h2>
+        <div className="space-y-4">
+          <p>Games Played: {stats.gamesPlayed}</p>
+          <p>Games Won: {stats.gamesWon}</p>
+          <p>Win Percentage: {stats.winPercentage}%</p>
+          <p>Current Streak: {stats.currentStreak}</p>
+          <p>Max Streak: {stats.maxStreak}</p>
+          <p>Average Guesses: {stats.averageGuesses.toFixed(2)}</p>
         </div>
       </div>
     </div>
@@ -137,7 +195,7 @@ const GameCompletionScreen = ({ won, correctGuesses, correctDates, onShare, game
 };
 
 const Footer = () => (
-  <footer className="mt-8 text-center text-sm text-gray-600">
+  <footer className="mt-8 text-center text-xs text-gray-600">
     <p>&copy; {new Date().getFullYear()} Scafs Enterprises. All rights reserved.</p>
     <div className="mt-2">
       <a href="/terms" className="hover:underline mr-4">Terms of Service</a>
@@ -162,25 +220,6 @@ const ModeToggle = ({ gameMode, setGameMode }) => {
   );
 };
 
-const HintOverlay = ({ isOpen, onClose, hint }) => {
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
-      <div className="bg-white rounded-lg max-w-md w-full p-6 relative">
-        <button 
-          onClick={onClose}
-          className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
-        >
-          <XMarkIcon className="h-6 w-6" />
-        </button>
-        <h2 className="text-2xl font-bold mb-4">Hint</h2>
-        <p className="text-lg">{hint}</p>
-      </div>
-    </div>
-  );
-};
-
 const ChronologicGame = () => {
   const [numbers, setNumbers] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
@@ -189,12 +228,11 @@ const ChronologicGame = () => {
   const [gameWon, setGameWon] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [isHintOpen, setIsHintOpen] = useState(false);
+  const [isStatsOpen, setIsStatsOpen] = useState(false);
   const [gameNumber, setGameNumber] = useState('');
   const [isWiggling, setIsWiggling] = useState(false);
   const [submissionStatus, setSubmissionStatus] = useState(null);
-  const [hintsUsed, setHintsUsed] = useState(0);
-  const [isHintOpen, setIsHintOpen] = useState(false);
-  const [currentHint, setCurrentHint] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [showConfetti, setShowConfetti] = useState(false);
   const [correctNumbers, setCorrectNumbers] = useState([]);
@@ -214,23 +252,32 @@ const ChronologicGame = () => {
     return savedMode || 'normal';
   });
   const [error, setError] = useState(null);
+  const [hintsUsed, setHintsUsed] = useState(0);
+  const [currentHint, setCurrentHint] = useState('');
+  const [streak, setStreak] = useState(0);
+  const [lastPlayedDate, setLastPlayedDate] = useState(null);
+  const [stats, setStats] = useState({
+    gamesPlayed: 0,
+    gamesWon: 0,
+    winPercentage: 0,
+    currentStreak: 0,
+    maxStreak: 0,
+    averageGuesses: 0,
+    totalGuesses: 0
+  });
 
-  const getHint = () => {
-    if (hintsUsed >= 2 || correctGuesses.length === 4) {
-      alert("No more hints available!");
-      return;
+  const shuffleArray = (array) => {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
     }
+    return array;
+  };
 
-    const unguessedDates = puzzle.correctDates.filter(date => 
-      !correctGuesses.some(guess => guess.date === date.date)
-    );
-
-    if (unguessedDates.length > 0) {
-      const randomHint = unguessedDates[Math.floor(Math.random() * unguessedDates.length)].hint;
-      setCurrentHint(randomHint);
-      setIsHintOpen(true);
-      setHintsUsed(hintsUsed + 1);
-    }
+  const initializeNewGame = (loadedPuzzle) => {
+    const shuffledNumbers = shuffleArray([...loadedPuzzle.numbers]);
+    setNumbers(shuffledNumbers.map((num, index) => ({ id: index, value: num, used: false })));
+    setHintsUsed(0);
   };
 
   useEffect(() => {
@@ -238,6 +285,7 @@ const ChronologicGame = () => {
       setIsLoading(true);
       setError(null);
       const savedState = localStorage.getItem('chronologicGameState');
+      const savedStats = localStorage.getItem('chronologicStats');
       
       try {
         const loadedPuzzle = await loadPuzzle(selectedDate);
@@ -252,12 +300,19 @@ const ChronologicGame = () => {
             setIncorrectGuessesLeft(gameState.incorrectGuessesLeft || 6);
             setCorrectGuesses(gameState.correctGuesses || []);
             setNumbers(gameState.numbers || []);
+            setHintsUsed(gameState.hintsUsed || 0);
           } else {
             initializeNewGame(loadedPuzzle);
           }
         } else {
           initializeNewGame(loadedPuzzle);
         }
+
+        if (savedStats) {
+          setStats(JSON.parse(savedStats));
+        }
+
+        loadStreak();
       } catch (error) {
         console.error('Error loading puzzle:', error);
         setError(error.message || 'An unknown error occurred while loading the puzzle');
@@ -274,9 +329,26 @@ const ChronologicGame = () => {
     localStorage.setItem('gameMode', gameMode);
   }, [gameMode]);
 
-  const initializeNewGame = (loadedPuzzle) => {
-    const shuffledNumbers = shuffleArray([...loadedPuzzle.numbers]);
-    setNumbers(shuffledNumbers.map((num, index) => ({ id: index, value: num, used: false })));
+  useEffect(() => {
+    localStorage.setItem('chronologicStats', JSON.stringify(stats));
+  }, [stats]);
+
+  const loadStreak = () => {
+    const savedStreak = localStorage.getItem('chronologicStreak');
+    const savedLastPlayed = localStorage.getItem('chronologicLastPlayed');
+    
+    if (savedStreak && savedLastPlayed) {
+      const currentDate = new Date().toDateString();
+      const yesterdayDate = new Date(Date.now() - 86400000).toDateString();
+      
+      if (savedLastPlayed === yesterdayDate) {
+        setStreak(parseInt(savedStreak));
+      } else if (savedLastPlayed !== currentDate) {
+        // Reset streak if last played date is not yesterday or today
+        setStreak(0);
+      }
+      setLastPlayedDate(savedLastPlayed);
+    }
   };
 
   const saveGameState = () => {
@@ -284,21 +356,14 @@ const ChronologicGame = () => {
       gameWon,
       incorrectGuessesLeft,
       correctGuesses,
-      numbers
+      numbers,
+      hintsUsed
     };
     localStorage.setItem('chronologicGameState', JSON.stringify({
       date: selectedDate,
       gameState,
       gameNumber: gameNumber
     }));
-  };
-
-  const shuffleArray = (array) => {
-    for (let i = array.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [array[i], array[j]] = [array[j], array[i]];
-    }
-    return array;
   };
 
   const handleNumberClick = (id) => {
@@ -336,11 +401,16 @@ const ChronologicGame = () => {
         setGameWon(true);
         setShowConfetti(true);
         setTimeout(() => setShowConfetti(false), 5000);
+        updateStats(true, 6 - incorrectGuessesLeft + 1);
       }
     } else {
       setSubmissionStatus('incorrect');
       setTimeout(() => setSubmissionStatus(null), 1000);
       setIncorrectGuessesLeft(incorrectGuessesLeft - 1);
+
+      if (incorrectGuessesLeft === 1) {
+        updateStats(false, 6);
+      }
 
       if (gameMode === 'normal') {
         const newCorrectNumbers = [];
@@ -365,6 +435,31 @@ const ChronologicGame = () => {
     }
 
     saveGameState();
+  };
+
+  const updateStats = (won, guesses) => {
+    setStats(prevStats => {
+      const newStats = {
+        gamesPlayed: prevStats.gamesPlayed + 1,
+        gamesWon: prevStats.gamesWon + (won ? 1 : 0),
+        totalGuesses: prevStats.totalGuesses + guesses,
+        currentStreak: won ? prevStats.currentStreak + 1 : 0,
+        maxStreak: Math.max(prevStats.maxStreak, won ? prevStats.currentStreak + 1 : 0)
+      };
+      newStats.winPercentage = (newStats.gamesWon / newStats.gamesPlayed) * 100;
+      newStats.averageGuesses = newStats.totalGuesses / newStats.gamesPlayed;
+      return newStats;
+    });
+
+    if (won) {
+      const currentDate = new Date().toDateString();
+      if (lastPlayedDate !== currentDate) {
+        const newStreak = streak + 1;
+        setStreak(newStreak);
+        localStorage.setItem('chronologicStreak', newStreak.toString());
+        localStorage.setItem('chronologicLastPlayed', currentDate);
+      }
+    }
   };
 
   const getNumberStyle = (id, used) => {
@@ -459,22 +554,50 @@ const ChronologicGame = () => {
     );
   };
 
+  const getHint = () => {
+    if (hintsUsed >= 2 || correctGuesses.length === 4) {
+      alert("No more hints available!");
+      return;
+    }
+
+    const unguessedDates = puzzle.correctDates.filter(date => 
+      !correctGuesses.some(guess => guess.date === date.date)
+    );
+
+    if (unguessedDates.length > 0) {
+      const randomHint = unguessedDates[Math.floor(Math.random() * unguessedDates.length)].hint;
+      setCurrentHint(randomHint);
+      setIsHintOpen(true);
+      setHintsUsed(hintsUsed + 1);
+      saveGameState();
+    }
+  };
+
   return (
     <div className="flex flex-col justify-between min-h-screen p-4">
       <div className="bg-white min-h-screen">
-        <div className="top-bar">
-          <h1 className="text-2xl font-bold chronologic-font">Chronologic</h1>
-          <div className="top-controls">
-            <ModeToggle gameMode={gameMode} setGameMode={setGameMode} />
-            <button onClick={() => setIsHelpOpen(true)} className="text-blue-500 hover:text-blue-700">
-              <QuestionMarkCircleIcon className="h-6 w-6" />
-            </button>
-            <button onClick={getHint} className="text-yellow-500 hover:text-yellow-700" disabled={hintsUsed >= 2 || correctGuesses.length === 4}>
-              <LightBulbIcon className="h-6 w-6" />
-            </button>
-            <button onClick={() => setIsMenuOpen(true)} className="text-red-500 hover:text-red-700">
-              <WrenchIcon className="h-6 w-6" />
-            </button>
+        <div className="container mx-auto px-4">
+          <div className="top-bar">
+            <h1 className="text-2xl font-bold chronologic-font">Chronologic</h1>
+            <div className="top-controls">
+              <ModeToggle gameMode={gameMode} setGameMode={setGameMode} />
+              <div className="flex items-center mr-4">
+                <FireIcon className="h-6 w-6 text-orange-500 mr-1" />
+                <span className="font-bold">{streak}</span>
+              </div>
+              <button onClick={() => setIsStatsOpen(true)} className="text-green-500 hover:text-green-700 mr-2">
+                <ChartBarIcon className="h-6 w-6" />
+              </button>
+              <button onClick={() => setIsHelpOpen(true)} className="text-blue-500 hover:text-blue-700 mr-2">
+                <QuestionMarkCircleIcon className="h-6 w-6" />
+              </button>
+              <button onClick={getHint} className="text-yellow-500 hover:text-yellow-700 mr-2" disabled={hintsUsed >= 2 || correctGuesses.length === 4}>
+                <LightBulbIcon className="h-6 w-6" />
+              </button>
+              <button onClick={() => setIsMenuOpen(true)} className="text-red-500 hover:text-red-700">
+                <WrenchIcon className="h-6 w-6" />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -585,6 +708,7 @@ const ChronologicGame = () => {
         />
         <HelpOverlay isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} />
         <HintOverlay isOpen={isHintOpen} onClose={() => setIsHintOpen(false)} hint={currentHint} />
+        <StatisticsOverlay isOpen={isStatsOpen} onClose={() => setIsStatsOpen(false)} stats={stats} />
       </div>
     </div>
   );
