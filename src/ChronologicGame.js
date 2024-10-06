@@ -84,7 +84,6 @@ const HelpOverlay = ({ isOpen, onClose }) => {
             <li>Check out the theme of the day for a clue.</li>
             <li>In Normal mode, you'll get feedback on correct number positions.</li>
             <li>In Hard mode, you won't receive any feedback on number positions.</li>
-            <li><b>You only get 2 hints per game. Play wisely!</b></li>
           </ul>
 
           <h2 className="text-2xl font-bold text-black mb-4">Examples</h2>
@@ -226,6 +225,7 @@ const ChronologicGame = () => {
   const [correctGuesses, setCorrectGuesses] = useState([]);
   const [incorrectGuessesLeft, setIncorrectGuessesLeft] = useState(6);
   const [gameWon, setGameWon] = useState(false);
+  const [gameCompleted, setGameCompleted] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isHintOpen, setIsHintOpen] = useState(false);
@@ -278,6 +278,11 @@ const ChronologicGame = () => {
     const shuffledNumbers = shuffleArray([...loadedPuzzle.numbers]);
     setNumbers(shuffledNumbers.map((num, index) => ({ id: index, value: num, used: false })));
     setHintsUsed(0);
+    setGameCompleted(false);
+    setGameWon(false);
+    setIncorrectGuessesLeft(6);
+    setCorrectGuesses([]);
+    setSelectedIds([]);
   };
 
   useEffect(() => {
@@ -301,6 +306,7 @@ const ChronologicGame = () => {
             setCorrectGuesses(gameState.correctGuesses || []);
             setNumbers(gameState.numbers || []);
             setHintsUsed(gameState.hintsUsed || 0);
+            setGameCompleted(gameState.gameCompleted || false);
           } else {
             initializeNewGame(loadedPuzzle);
           }
@@ -341,11 +347,12 @@ const ChronologicGame = () => {
       const currentDate = new Date().toDateString();
       const yesterdayDate = new Date(Date.now() - 86400000).toDateString();
       
-      if (savedLastPlayed === yesterdayDate) {
+      if (savedLastPlayed === yesterdayDate || savedLastPlayed === currentDate) {
         setStreak(parseInt(savedStreak));
-      } else if (savedLastPlayed !== currentDate) {
+      } else {
         // Reset streak if last played date is not yesterday or today
         setStreak(0);
+        localStorage.setItem('chronologicStreak', '0');
       }
       setLastPlayedDate(savedLastPlayed);
     }
@@ -357,7 +364,8 @@ const ChronologicGame = () => {
       incorrectGuessesLeft,
       correctGuesses,
       numbers,
-      hintsUsed
+      hintsUsed,
+      gameCompleted
     };
     localStorage.setItem('chronologicGameState', JSON.stringify({
       date: selectedDate,
@@ -399,6 +407,7 @@ const ChronologicGame = () => {
 
       if (correctGuesses.length + 1 === 4) {
         setGameWon(true);
+        setGameCompleted(true);
         setShowConfetti(true);
         setTimeout(() => setShowConfetti(false), 5000);
         updateStats(true, 6 - incorrectGuessesLeft + 1);
@@ -409,6 +418,7 @@ const ChronologicGame = () => {
       setIncorrectGuessesLeft(incorrectGuessesLeft - 1);
 
       if (incorrectGuessesLeft === 1) {
+        setGameCompleted(true);
         updateStats(false, 6);
       }
 
@@ -448,6 +458,9 @@ const ChronologicGame = () => {
       };
       newStats.winPercentage = (newStats.gamesWon / newStats.gamesPlayed) * 100;
       newStats.averageGuesses = newStats.totalGuesses / newStats.gamesPlayed;
+      
+      localStorage.setItem('chronologicStats', JSON.stringify(newStats));
+      
       return newStats;
     });
 
@@ -459,6 +472,10 @@ const ChronologicGame = () => {
         localStorage.setItem('chronologicStreak', newStreak.toString());
         localStorage.setItem('chronologicLastPlayed', currentDate);
       }
+    } else {
+      setStreak(0);
+      localStorage.setItem('chronologicStreak', '0');
+      localStorage.setItem('chronologicLastPlayed', new Date().toDateString());
     }
   };
 
@@ -503,19 +520,13 @@ const ChronologicGame = () => {
     const earliestDate = startOfDay(toZonedTime(new Date('2024-10-04'), 'America/New_York'));
     const today = startOfDay(toZonedTime(new Date(), 'America/New_York'));
 
-    // Ensure we don't go beyond today's date or before October 4th, 2024
     if (newDate > today || newDate < earliestDate) {
       return;
     }
     
     setCurrentDate(newDate);
     setSelectedDate(format(newDate, 'yyyy-MM-dd'));
-    // Reset game state for the new date
-    setGameWon(false);
-    setIncorrectGuessesLeft(6);
-    setCorrectGuesses([]);
-    setSelectedIds([]);
-    setNumbers([]); // Clear the numbers to force a reload of the puzzle
+    initializeNewGame(puzzle);
   };
 
   const renderNavigationButtons = () => {
@@ -559,7 +570,6 @@ const ChronologicGame = () => {
       alert("No more hints available!");
       return;
     }
-
     const unguessedDates = puzzle.correctDates.filter(date => 
       !correctGuesses.some(guess => guess.date === date.date)
     );
@@ -591,7 +601,7 @@ const ChronologicGame = () => {
               <button onClick={() => setIsHelpOpen(true)} className="text-blue-500 hover:text-blue-700 mr-2">
                 <QuestionMarkCircleIcon className="h-6 w-6" />
               </button>
-              <button onClick={getHint} className="text-yellow-500 hover:text-yellow-700 mr-2" disabled={hintsUsed >= 2 || correctGuesses.length === 4}>
+              <button onClick={getHint} className="text-yellow-500 hover:text-yellow-700 mr-2" disabled={hintsUsed >= 2 || correctGuesses.length === 4 || gameCompleted}>
                 <LightBulbIcon className="h-6 w-6" />
               </button>
               <button onClick={() => setIsMenuOpen(true)} className="text-red-500 hover:text-red-700">
@@ -615,7 +625,7 @@ const ChronologicGame = () => {
                 <p>Please try again later or contact support if the problem persists.</p>
               </div>
             ) : puzzle ? (
-              gameWon || incorrectGuessesLeft === 0 ? (
+              gameCompleted ? (
                 <GameCompletionScreen 
                   won={gameWon}
                   correctGuesses={correctGuesses}
