@@ -42,7 +42,7 @@ const MenuOverlay = ({ isOpen, onClose, gameMode, setGameMode }) => {
         </ul>
 
         <div className="mt-4 flex items-center">
-          <span className="mr-2 text-gray-700">Game Mode</span>
+          <span className="mr-2 text-gray-700">Difficulty</span>
           <label className="switch">
             <input
               type="checkbox"
@@ -83,8 +83,8 @@ const HelpOverlay = ({ isOpen, onClose }) => {
           <ul className="text-sm text-gray-700 space-y-2 mb-6">
             <li>Choose 3 numbers in the correct format (MM/DD/YY).</li>
             <li>Check out the theme of the day for a clue.</li>
-            <li>In Normal mode, you'll get feedback on correct number positions.</li>
-            <li>In Hard mode, you won't receive any feedback on number positions.</li>
+            <li>In Normal difficulty, you'll get feedback on correct number positions.</li>
+            <li>In Hard difficulty, you won't receive any feedback on number positions.</li>
           </ul>
 
           <h2 className="text-2xl font-bold text-black mb-4">Examples</h2>
@@ -637,7 +637,7 @@ const ChronologicGame = () => {
                 </div>
               </div>
               
-                <p className="text-xs text-right game-number-display mb-1">#<b>{gameNumber} </b>- Mode: <b>{gameMode === 'hard' ? 'Hard' : 'Normal'}</b></p>
+                <p className="text-xs text-right game-number-display mb-1">#<b>{gameNumber} </b>- Difficulty: <b>{gameMode === 'hard' ? 'Hard' : 'Normal'}</b></p>
                 </div>  
                 <p className="text-lg mb-3 text-center italic font-bold text-black border-2 border-gray-300 p-2 rounded-lg bg-gray-100">{puzzle.theme}</p>
                 <div className="flex justify-center mb-3">
