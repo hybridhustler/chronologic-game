@@ -588,9 +588,8 @@ const ChronologicGame = () => {
     <div className="flex flex-col justify-between min-h-screen p-4 bg-pattern">
       <div className="bg-white rounded-lg shadow-lg overflow-hidden">
         <div className="top-bar">
-          <h1 className="text-3xl font-bold chronologic-font text-white mb-2">Chronologic</h1>
+          <h1 className="text-3xl font-bold chronologic-font text-white mb-1">Chronologic</h1>
           <div className="top-controls flex justify-between items-center">
-            
           </div>
         </div>
 
@@ -621,16 +620,16 @@ const ChronologicGame = () => {
               <div className="top-controls flex justify-between items-left">
               <div className="flex justify-start items-left space-x-4">
                 <div className="flex items-center">
-                  <FireIcon className="h-6 w-6 text-yellow-300 mr-0" />
-                  <span className="font-bold text-white">{streak}</span>
-                  <button onClick={getHint} className="text-yellow-700 hover:text-yellow-400" disabled={hintsUsed >= 2 || correctGuesses.length === 4 || gameCompleted}>
-                    <LightBulbIcon className="h-6 w-6 mr-1" />
-                  </button>
-                  <button onClick={() => setIsStatsOpen(true)} className="text-green-700 hover:text-blue-400">
-                    <ChartBarIcon className="h-6 w-6 mr-2"/>
+                  <FireIcon className="h-6 w-6 text-yellow-300" />
+                  <span className="font-bold text-gray-500 mr-9">{streak}</span>
+                  <button onClick={() => setIsStatsOpen(true)} className="text-green-700 hover:text-green-400">
+                    <ChartBarIcon className="h-6 w-6 mr-9"/>
                   </button>
                   <button onClick={() => setIsHelpOpen(true)} className="text-blue-700 hover:text-blue-400">
-                    <QuestionMarkCircleIcon className="h-6 w-6 mr-3" />
+                    <QuestionMarkCircleIcon className="h-6 w-6 mr-9" />
+                  </button>
+                  <button onClick={getHint} className="text-yellow-700 hover:text-yellow-400" disabled={hintsUsed >= 2 || correctGuesses.length === 4 || gameCompleted}>
+                    <LightBulbIcon className="h-6 w-6 mr-9" />
                   </button>
                   <button onClick={() => setIsMenuOpen(true)} className="text-silver-700 hover:text-gray-400">
                     <WrenchIcon className="h-6 w-6" />
@@ -638,7 +637,7 @@ const ChronologicGame = () => {
                 </div>
               </div>
               
-                <p className="text-xs text-right game-number-display mb-2">#<b>{gameNumber} </b>- Mode: <b>{gameMode === 'hard' ? 'Hard' : 'Normal'}</b></p>
+                <p className="text-xs text-right game-number-display mb-1">#<b>{gameNumber} </b>- Mode: <b>{gameMode === 'hard' ? 'Hard' : 'Normal'}</b></p>
                 </div>  
                 <p className="text-lg mb-3 text-center italic font-bold text-black border-2 border-gray-300 p-2 rounded-lg bg-gray-100">{puzzle.theme}</p>
                 <div className="flex justify-center mb-3">
@@ -693,6 +692,7 @@ const ChronologicGame = () => {
   >
     Shuffle
   </button>
+  
 </div>
 
                 <div className="correct-guesses">
