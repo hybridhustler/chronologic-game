@@ -10,20 +10,21 @@
   src: url('/src/ChronologicFont.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
+  color: white !important;
 }
 
 /* Base styles */
 body {
-  @apply bg-white text-black transition-colors duration-200 ease-in-out m-0 p-0 box-border;
+  @apply bg-gray-100 text-gray-800 transition-colors duration-200 ease-in-out m-0 p-0 box-border;
   font-family: 'Roboto', sans-serif;
 }
 
 /* Game title */
 .chronologic-font {
   font-family: 'ChronologicFont', sans-serif;
-  color: #FF6600;
+  color: #ffffff !important;
   font-size: 2.8rem;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 /* Game container layout */
@@ -31,7 +32,10 @@ body {
   width: 100%;
   max-width: 400px;
   margin: 0 auto;
-  padding: 0 1rem;
+  padding: 1rem;
+  background-color: white;
+  border-radius: 0 0 1rem 1rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 /* Responsive layout */
@@ -44,23 +48,23 @@ body {
 
 /* Glow effects */
 .glow-green {
-  box-shadow: 0 0 10px #4CAF50, 0 0 20px #4CAF50, 0 0 30px #4CAF50;
+  box-shadow: 0 0 10px #4CAF50, 0 0 20px #4CAF50;
   animation: glow-green 1s ease-in-out infinite alternate;
 }
 
 @keyframes glow-green {
-  from { box-shadow: 0 0 10px #4CAF50, 0 0 20px #4CAF50, 0 0 30px #4CAF50; }
-  to { box-shadow: 0 0 20px #4CAF50, 0 0 30px #4CAF50, 0 0 40px #4CAF50; }
+  from { box-shadow: 0 0 10px #4CAF50, 0 0 20px #4CAF50; }
+  to { box-shadow: 0 0 20px #4CAF50, 0 0 30px #4CAF50; }
 }
 
 .glow-red {
-  box-shadow: 0 0 10px #FF5252, 0 0 20px #FF5252, 0 0 30px #FF5252;
+  box-shadow: 0 0 10px #FF5252, 0 0 20px #FF5252;
   animation: glow-red 1s ease-in-out infinite alternate;
 }
 
 @keyframes glow-red {
-  from { box-shadow: 0 0 10px #FF5252, 0 0 20px #FF5252, 0 0 30px #FF5252; }
-  to { box-shadow: 0 0 20px #FF5252, 0 0 30px #FF5252, 0 0 40px #FF5252; }
+  from { box-shadow: 0 0 10px #FF5252, 0 0 20px #FF5252; }
+  to { box-shadow: 0 0 20px #FF5252, 0 0 30px #FF5252; }
 }
 
 /* Animations */
@@ -112,8 +116,11 @@ body {
   border-radius: 50%;
 }
 
+/* ON state with glowing red effect */
 input:checked + .slider {
-  background-color: #2196F3;
+  background-color: #FF5252;
+  box-shadow: 0 0 20px rgba(255, 0, 0, 0.8);
+  animation: glow-red 1.5s infinite alternate; /* Glowing red animation */
 }
 
 input:checked + .slider:before {
@@ -122,35 +129,27 @@ input:checked + .slider:before {
 
 /* Button styles */
 .btn {
-  @apply font-bold py-2 px-4 rounded transition duration-200 ease-in-out m-1;
+  @apply font-bold py-2 px-4 rounded-lg shadow transition duration-300 ease-in-out m-1;
 }
 
 .btn-primary {
-  @apply bg-blue-500 text-white;
-}
-
-.btn-primary:hover {
-  @apply bg-blue-700;
+  @apply bg-blue-500 text-white hover:bg-blue-600;
 }
 
 .btn-secondary {
-  @apply bg-gray-300 text-black;
-}
-
-.btn-secondary:hover {
-  @apply bg-gray-400;
+  @apply bg-gray-300 text-gray-700 hover:bg-gray-400;
 }
 
 /* Number grid styles */
 .number-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 0.5rem;
-  margin-bottom: 1rem;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
 }
 
 .number-button {
-  @apply w-full aspect-square text-2xl font-bold rounded relative transition duration-200 ease-in-out;
+  @apply w-full aspect-square text-2xl font-bold rounded-lg relative transition duration-300 ease-in-out;
   height: 0;
   padding-bottom: 100%;
 }
@@ -184,7 +183,7 @@ input:checked + .slider:before {
 
 /* Theme display */
 .theme-display {
-  @apply text-lg mb-3 text-center italic font-bold border-2 p-2 rounded-lg;
+  @apply text-lg mb-4 text-center italic font-bold border-2 p-3 rounded-lg bg-orange-100 shadow;
 }
 
 /* Footer styles */
@@ -194,11 +193,43 @@ footer {
 
 /* Overlay styles */
 .overlay {
-  @apply fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
 }
 
 .overlay-content {
-  @apply bg-white rounded-lg max-w-md w-full p-6 relative;
+  background-color: white;
+  padding: 2rem;
+  border-radius: 0.5rem;
+  max-width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+.overlay-close-button {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background-color: transparent;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #4a5568;
+  transition: color 0.2s ease-in-out;
+}
+
+.overlay-close-button:hover {
+  color: #2d3748;
 }
 
 /* Help content styles */
@@ -208,7 +239,7 @@ footer {
 
 /* Navigation button styles */
 .nav-button {
-  @apply text-blue-500 hover:text-blue-700;
+  @apply text-blue-500 hover:text-blue-700 transition duration-300 ease-in-out;
 }
 
 /* Top bar styles */
@@ -217,13 +248,10 @@ footer {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 1rem 0;
-  border-bottom: 1px solid #e2e8f0;
+  padding: 1rem;
+  border-radius: 1rem 1rem 0 0;
   text-align: center;
-}
-
-.top-bar h1 {
-  margin: 0 0 1rem 0;
+  background: linear-gradient(to right, #FF6600, #FF8C00);
 }
 
 .top-controls {
@@ -237,6 +265,7 @@ footer {
   display: flex;
   align-items: center;
   font-size: 0.875rem;
+  color: white;
 }
 
 .mode-toggle span {
@@ -250,19 +279,14 @@ footer {
 
 @keyframes lastGuessPulse {
   0%, 100% { box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.4); }
-  50% { box-shadow: 0 0 0 20px rgba(255, 0, 0, 0); }
-}
-
-/* Remove white border */
-* {
-  @apply border-0;
+  50% { box-shadow: 0 0 0 10px rgba(255, 0, 0, 0); }
 }
 
 /* Game number display */
 .game-number-display {
   @apply text-2xl font-bold;
   padding-top: 10px;
-  color: rgb(88, 87, 87);
+  color: #FF6600;
 }
 
 /* Confetti container */
@@ -278,91 +302,25 @@ footer {
 
 /* Loader styles */
 .loader-container {
-  @apply flex justify-center items-center h-64;
+  @apply flex justify-center items-center h-64 bg-white rounded-lg shadow;
 }
 
 /* Error message styles */
 .error-message {
-  @apply text-center text-red-500;
+  @apply text-center text-red-500 bg-red-100 p-4 rounded-lg shadow;
 }
 
 /* Correct guesses display */
 .correct-guesses {
-  @apply mt-3 grid grid-cols-1 gap-1;
+  @apply mt-4 grid grid-cols-1 gap-2;
 }
 
 .correct-guess-item {
-  @apply p-2 bg-green-100 rounded-lg;
+  @apply p-3 bg-green-100 border-l-4 border-green-500 rounded-lg;
 }
 
-/* Navigation buttons container */
-.navigation-buttons {
-  @apply flex justify-between items-center mt-4;
-}
-
-/* Ensure buttons are clickable and visible */
-button {
-  @apply cursor-pointer opacity-100;
-}
-
-button:disabled {
-  @apply cursor-not-allowed opacity-50;
-}
-
-/* Responsive styles for larger screens */
-@media (min-width: 640px) {
-  .top-bar {
-    flex-direction: row;
-    justify-content: space-between;
-  }
-
-  .top-bar h1 {
-    margin: 0;
-  }
-}
-
-/* Responsive styles for smaller screens */
-@media (max-width: 639px) {
-  .top-controls {
-    margin-top: 1rem;
-    width: 100%;
-    justify-content: center;
-  }
-
-  .mode-toggle {
-    font-size: 0.75rem;
-  }
-
-  .switch {
-    width: 50px;
-    height: 28px;
-  }
-
-  .slider:before {
-    height: 22px;
-    width: 22px;
-  }
-
-  input:checked + .slider:before {
-    transform: translateX(22px);
-  }
-
-  .number-button {
-    @apply text-xl;
-  }
-  
-  .chronologic-font {
-    font-size: 1.5rem;
-  }
-}
-
-/* Overlay responsive styles */
-@media (max-width: 640px) {
-  .overlay-content {
-    max-width: 90%;
-  }
-
-  .help-content {
-    padding: 1rem;
-  }
+/* Add a subtle background pattern */
+.bg-pattern {
+  background-color: #f0f0f0;
+  background-image: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23d0d0d0' fill-opacity='0.4' fill-rule='evenodd'%3E%3Ccircle cx='3' cy='3' r='3'/%3E%3Ccircle cx='13' cy='13' r='3'/%3E%3C/g%3E%3C/svg%3E");
 }
