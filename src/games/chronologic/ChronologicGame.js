@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { WrenchIcon, QuestionMarkCircleIcon, ShareIcon, XMarkIcon, ArrowLeftIcon, ArrowRightIcon, LightBulbIcon, FireIcon, ChartBarIcon } from '@heroicons/react/24/outline';
+import { WrenchIcon, QuestionMarkCircleIcon, ShareIcon, XMarkIcon, ArrowLeftIcon, ArrowRightIcon, LightBulbIcon, FireIcon, ChartBarIcon, LockClosedIcon } from '@heroicons/react/24/outline';
 import { ClipLoader } from 'react-spinners';
 import Confetti from 'react-confetti';
 import { format, parseISO, startOfDay } from 'date-fns';
@@ -76,7 +76,7 @@ const HelpOverlay = ({ isOpen, onClose }) => {
             How to Play
             <br />
             <span className="text-lg font-medium text-gray-700 block mt-2">
-              Guess 4 historical dates in 6 tries
+              Guess 4 historical dates in 3 tries
             </span>
           </h2>
 
@@ -85,19 +85,19 @@ const HelpOverlay = ({ isOpen, onClose }) => {
             <li>Check out the theme of the day for a clue.</li>
             <li>In Normal difficulty, you'll get feedback on correct number positions.</li>
             <li>In Hard difficulty, you won't receive any feedback on number positions.</li>
+            <li>Use the "Locked-in" feature once per game to see correct positions for your next guess.</li>
+            <li>You can use up to 2 general hints per game.</li>
+            <li>Read the blog post for more context and subtle clues.</li>
           </ul>
 
-          <h2 className="text-2xl font-bold text-black mb-4">Examples</h2>
+          <h2 className="text-2xl font-bold text-black mb-4">Features</h2>
 
-          <div className="space-y-6">
-            <div className="text-left">
-              <img src="example.png" alt="Incorrect Example" className="w-full h-auto max-w-xs rounded-lg shadow-lg mx-auto" />
-            </div>
-
-            <div className="text-left">
-              <img src="example2.png" alt="Correct Example" className="w-full h-auto max-w-xs rounded-lg shadow-lg mx-auto" />
-            </div>
-          </div>
+          <ul className="text-sm text-gray-700 space-y-2 mb-6">
+            <li><LightBulbIcon className="h-4 w-4 inline" /> - Get a general hint (max 2 per game)</li>
+            <li><LockClosedIcon className="h-4 w-4 inline" /> - Use the "Locked-in" feature (once per game)</li>
+            <li><ChartBarIcon className="h-4 w-4 inline" /> - View your statistics</li>
+            <li><FireIcon className="h-4 w-4 inline" /> - Your current streak</li>
+          </ul>
         </div>
       </div>
     </div>
@@ -149,7 +149,7 @@ const StatisticsOverlay = ({ isOpen, onClose, stats }) => {
   );
 };
 
-const GameCompletionScreen = ({ won, correctGuesses, correctDates, onShare, gameNumber, theme }) => {
+const GameCompletionScreen = ({ won, correctGuesses, correctDates, onShare, gameNumber, theme, timeTaken }) => {
   const generateShareText = (correctGuessesCount) => {
     let emojiGrid = '';
     for (let i = 0; i < 4; i++) {
@@ -159,7 +159,7 @@ const GameCompletionScreen = ({ won, correctGuesses, correctDates, onShare, game
         emojiGrid += '🟥🟥🟥\n';
       }
     }
-    return `Chronologic Game #${gameNumber} - ${theme}\n${emojiGrid}\nPlay at https://chronologic-game.vercel.app`;
+    return `Chronologic Game #${gameNumber} - ${theme}\n${emojiGrid}\nTime: ${timeTaken}\nPlay at https://chronologic-game.vercel.app`;
   };
 
   const shareText = generateShareText(correctGuesses.length);
@@ -193,28 +193,11 @@ const GameCompletionScreen = ({ won, correctGuesses, correctDates, onShare, game
   );
 };
 
-
-const ModeToggle = ({ gameMode, setGameMode }) => {
-  return (
-    <div className="flex items-center">
-      <span className="mr-2 text-sm">Mode: <b>{gameMode === 'hard' ? 'Hard' : 'Normal'}</b></span>
-      <label className="switch">
-        <input
-          type="checkbox"
-          checked={gameMode === 'hard'}
-          onChange={() => setGameMode(prev => prev === 'normal' ? 'hard' : 'normal')}
-        />
-        <span className="slider round"></span>
-      </label>
-    </div>
-  );
-};
-
 const ChronologicGame = () => {
   const [numbers, setNumbers] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
   const [correctGuesses, setCorrectGuesses] = useState([]);
-  const [incorrectGuessesLeft, setIncorrectGuessesLeft] = useState(6);
+  const [totalGuesses, setTotalGuesses] = useState(0);
   const [gameWon, setGameWon] = useState(false);
   const [gameCompleted, setGameCompleted] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -223,6 +206,7 @@ const ChronologicGame = () => {
   const [isStatsOpen, setIsStatsOpen] = useState(false);
   const [gameNumber, setGameNumber] = useState('');
   const [isWiggling, setIsWiggling] = useState(false);
+  const [incorrectGuessesLeft, setIncorrectGuessesLeft] = useState(6);
   const [submissionStatus, setSubmissionStatus] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showConfetti, setShowConfetti] = useState(false);
@@ -243,7 +227,8 @@ const ChronologicGame = () => {
     return savedMode || 'normal';
   });
   const [error, setError] = useState(null);
-  const [hintsUsed, setHintsUsed] = useState(0);
+  const [generalCluesUsed, setGeneralCluesUsed] = useState(0);
+  const [lockedInUsed, setLockedInUsed] = useState(false);
   const [currentHint, setCurrentHint] = useState('');
   const [streak, setStreak] = useState(0);
   const [lastPlayedDate, setLastPlayedDate] = useState(null);
@@ -256,6 +241,8 @@ const ChronologicGame = () => {
     averageGuesses: 0,
     totalGuesses: 0
   });
+  const [startTime, setStartTime] = useState(null);
+  const [endTime, setEndTime] = useState(null);
 
   const shuffleArray = (array) => {
     for (let i = array.length - 1; i > 0; i--) {
@@ -268,12 +255,15 @@ const ChronologicGame = () => {
   const initializeNewGame = (loadedPuzzle) => {
     const shuffledNumbers = shuffleArray([...loadedPuzzle.numbers]);
     setNumbers(shuffledNumbers.map((num, index) => ({ id: index, value: num, used: false })));
-    setHintsUsed(0);
+    setGeneralCluesUsed(0);
+    setLockedInUsed(false);
     setGameCompleted(false);
     setGameWon(false);
-    setIncorrectGuessesLeft(6);
+    setTotalGuesses(0);
     setCorrectGuesses([]);
     setSelectedIds([]);
+    setStartTime(Date.now());
+    setEndTime(null);
   };
 
   useEffect(() => {
@@ -293,11 +283,14 @@ const ChronologicGame = () => {
           
           if (date === selectedDate && savedGameNumber === loadedPuzzle.gameNumber) {
             setGameWon(gameState.gameWon || false);
-            setIncorrectGuessesLeft(gameState.incorrectGuessesLeft || 6);
+            setTotalGuesses(gameState.totalGuesses || 0);
             setCorrectGuesses(gameState.correctGuesses || []);
             setNumbers(gameState.numbers || []);
-            setHintsUsed(gameState.hintsUsed || 0);
+            setGeneralCluesUsed(gameState.generalCluesUsed || 0);
+            setLockedInUsed(gameState.lockedInUsed || false);
             setGameCompleted(gameState.gameCompleted || false);
+            setStartTime(gameState.startTime || Date.now());
+            setEndTime(gameState.endTime || null);
           } else {
             initializeNewGame(loadedPuzzle);
           }
@@ -323,6 +316,15 @@ const ChronologicGame = () => {
   }, [selectedDate]);
 
   useEffect(() => {
+    if (!startTime && !gameCompleted) {
+      setStartTime(Date.now());
+    }
+    if (gameCompleted && !endTime) {
+      setEndTime(Date.now());
+    }
+  }, [gameCompleted, startTime, endTime]);
+
+  useEffect(() => {
     localStorage.setItem('gameMode', gameMode);
   }, [gameMode]);
 
@@ -341,7 +343,6 @@ const ChronologicGame = () => {
       if (savedLastPlayed === yesterdayDate || savedLastPlayed === currentDate) {
         setStreak(parseInt(savedStreak));
       } else {
-        // Reset streak if last played date is not yesterday or today
         setStreak(0);
         localStorage.setItem('chronologicStreak', '0');
       }
@@ -352,11 +353,14 @@ const ChronologicGame = () => {
   const saveGameState = () => {
     const gameState = {
       gameWon,
-      incorrectGuessesLeft,
+      totalGuesses,
       correctGuesses,
       numbers,
-      hintsUsed,
-      gameCompleted
+      generalCluesUsed,
+      lockedInUsed,
+      gameCompleted,
+      startTime,
+      endTime
     };
     localStorage.setItem('chronologicGameState', JSON.stringify({
       date: selectedDate,
@@ -387,6 +391,8 @@ const ChronologicGame = () => {
     
     const correctGuess = puzzle.correctDates.find(date => date.date === formattedDate);
 
+    setTotalGuesses(totalGuesses + 1);
+
     if (correctGuess) {
       setSubmissionStatus('correct');
       setTimeout(() => setSubmissionStatus(null), 1000);
@@ -396,24 +402,23 @@ const ChronologicGame = () => {
       ));
       setSelectedIds([]);
 
-      if (correctGuesses.length + 1 === 4) {
-        setGameWon(true);
+      if (correctGuesses.length + 1 === 4 || totalGuesses + 1 === 3) {
+        setGameWon(correctGuesses.length + 1 === 4);
         setGameCompleted(true);
-        setShowConfetti(true);
+        setShowConfetti(correctGuesses.length + 1 === 4);
         setTimeout(() => setShowConfetti(false), 5000);
-        updateStats(true, 6 - incorrectGuessesLeft + 1);
+        updateStats(correctGuesses.length + 1 === 4, totalGuesses + 1);
       }
     } else {
       setSubmissionStatus('incorrect');
       setTimeout(() => setSubmissionStatus(null), 1000);
-      setIncorrectGuessesLeft(incorrectGuessesLeft - 1);
 
-      if (incorrectGuessesLeft === 1) {
+      if (totalGuesses + 1 === 3) {
         setGameCompleted(true);
-        updateStats(false, 6);
+        updateStats(false, 3);
       }
 
-      if (gameMode === 'normal') {
+      if (gameMode === 'normal' || lockedInUsed) {
         const newCorrectNumbers = [];
         const newIncorrectNumbers = [];
         selectedNumbers.forEach((num, index) => {
@@ -436,6 +441,38 @@ const ChronologicGame = () => {
     }
 
     saveGameState();
+  };
+
+  const handleLockedIn = () => {
+    if (!lockedInUsed) {
+      setLockedInUsed(true);
+      saveGameState();
+    }
+  };
+
+  const getHint = () => {
+    if (generalCluesUsed >= 2 || correctGuesses.length === 4 || gameCompleted) {
+      alert("No more hints available!");
+      return;
+    }
+
+    const unguessedDates = puzzle.correctDates.filter(date => 
+      !correctGuesses.some(guess => guess.date === date.date)
+    );
+
+    if (unguessedDates.length > 0) {
+      const randomHint = unguessedDates[Math.floor(Math.random() * unguessedDates.length)].hint;
+      setCurrentHint(randomHint);
+      setIsHintOpen(true);
+      setGeneralCluesUsed(generalCluesUsed + 1);
+      saveGameState();
+    }
+  };
+
+  const formatTime = (ms) => {
+    const seconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(seconds / 60);
+    return `${minutes}:${(seconds % 60).toString().padStart(2, '0')}`;
   };
 
   const updateStats = (won, guesses) => {
@@ -472,8 +509,8 @@ const ChronologicGame = () => {
 
   const getNumberStyle = (id, used) => {
     if (used) return 'bg-gray-400 text-white cursor-not-allowed';
-    if (correctNumbers.includes(id)) return 'bg-green-500 text-white glow-green';
-    if (incorrectNumbers.includes(id)) return 'bg-red-500 text-white glow-red';
+    if (correctNumbers.includes(id)) return 'bg-green-500 text-white';
+    if (incorrectNumbers.includes(id)) return 'bg-red-500 text-white';
     if (selectedIds.includes(id)) return 'bg-yellow-300 text-black';
     return 'bg-blue-100 text-blue-800 hover:bg-blue-200';
   };
@@ -556,31 +593,13 @@ const ChronologicGame = () => {
     );
   };
 
-  const getHint = () => {
-    if (hintsUsed >= 2 || correctGuesses.length === 4) {
-      alert("No more hints available!");
-      return;
-    }
-
-    const unguessedDates = puzzle.correctDates.filter(date => 
-      !correctGuesses.some(guess => guess.date === date.date)
-    );
-
-    if (unguessedDates.length > 0) {
-      const randomHint = unguessedDates[Math.floor(Math.random() * unguessedDates.length)].hint;
-      setCurrentHint(randomHint);
-      setIsHintOpen(true);
-      setHintsUsed(hintsUsed + 1);
-      saveGameState();
-    }
-  };
-
   return (
     <div className="flex flex-col justify-between min-h-screen p-4 bg-pattern">
       <div className="bg-white rounded-lg shadow-lg overflow-hidden">
         <div className="top-bar">
           <h1 className="text-3xl font-bold chronologic-font text-white mb-1">Chronologic</h1>
           <div className="top-controls flex justify-between items-center">
+            {/* Top controls content */}
           </div>
         </div>
 
@@ -605,40 +624,44 @@ const ChronologicGame = () => {
                 onShare={handleShare}
                 gameNumber={gameNumber}
                 theme={puzzle.theme}
+                timeTaken={formatTime(endTime - startTime)}
               />
             ) : (
               <>
-              <div className="top-controls flex justify-between items-left">
-              <div className="flex justify-start items-left space-x-4">
-                <div className="flex items-center">
-                  <FireIcon className="h-6 w-6 text-yellow-300" />
-                  <span className="font-bold text-gray-500 mr-9">{streak}</span>
-                  <button onClick={() => setIsStatsOpen(true)} className="text-green-700 hover:text-green-400">
-                    <ChartBarIcon className="h-6 w-6 mr-9"/>
-                  </button>
-                  <button onClick={() => setIsHelpOpen(true)} className="text-blue-700 hover:text-blue-400">
-                    <QuestionMarkCircleIcon className="h-6 w-6 mr-9" />
-                  </button>
-                  <button onClick={getHint} className="text-yellow-700 hover:text-yellow-400" disabled={hintsUsed >= 2 || correctGuesses.length === 4 || gameCompleted}>
-                    <LightBulbIcon className="h-6 w-6 mr-9" />
-                  </button>
-                  <button onClick={() => setIsMenuOpen(true)} className="text-silver-700 hover:text-gray-400">
-                    <WrenchIcon className="h-6 w-6" />
-                  </button>
+                <div className="top-controls flex justify-between items-center">
+                  <div className="flex items-center space-x-4">
+                    <FireIcon className="h-6 w-6 text-yellow-300" />
+                    <span className="font-bold text-gray-500">{streak}</span>
+                    <button onClick={() => setIsStatsOpen(true)} className="text-green-700 hover:text-green-400">
+                      <ChartBarIcon className="h-6 w-6" />
+                    </button>
+                    <button onClick={() => setIsHelpOpen(true)} className="text-blue-700 hover:text-blue-400">
+                      <QuestionMarkCircleIcon className="h-6 w-6" />
+                    </button>
+                    <button onClick={getHint} className="text-yellow-700 hover:text-yellow-400" disabled={generalCluesUsed >= 2 || gameCompleted}>
+                      <LightBulbIcon className="h-6 w-6" />
+                    </button>
+                    <button onClick={handleLockedIn} className="text-purple-700 hover:text-purple-400" disabled={lockedInUsed || gameCompleted}>
+                      <LockClosedIcon className="h-6 w-6" />
+                    </button>
+                    <button onClick={() => setIsMenuOpen(true)} className="text-gray-700 hover:text-gray-400">
+                      <WrenchIcon className="h-6 w-6" />
+                    </button>
+                  </div>
+                  <p className="text-xs text-right game-number-display">
+                    #<b>{gameNumber}</b> - Guess: <b>{totalGuesses}/3</b>
+                  </p>
                 </div>
-              </div>
-              
-                <p className="text-xs text-right game-number-display mb-1">#<b>{gameNumber} </b>- Difficulty: <b>{gameMode === 'hard' ? 'Hard' : 'Normal'}</b></p>
-                </div>  
-                <p className="text-lg mb-3 text-center italic font-bold text-black border-2 border-gray-300 p-2 rounded-lg bg-gray-100">{puzzle.theme}</p>
-                <div className="flex justify-center mb-3">
-                  {[...Array(6)].map((_, index) => (
-                    <div 
-                      key={index} 
-                      className={`w-3 h-3 mx-1 rounded-full ${index < incorrectGuessesLeft ? 'bg-blue-500' : 'bg-gray-300'}`}
-                    ></div>
-                  ))}
-                </div>
+                
+                <p className="text-lg mb-3 text-center italic font-bold text-black border-2 border-gray-300 p-2 rounded-lg bg-gray-100">
+                  {puzzle.theme}
+                </p>
+                
+                {puzzle.blogEntry && (
+                  <a href={puzzle.blogEntry} target="_blank" rel="noopener noreferrer" className="block text-center text-blue-500 hover:underline mb-3">
+                    Read more about today's theme
+                  </a>
+                )}
                 
                 <div className={`number-grid ${isWiggling ? 'wiggle' : ''} ${
                   submissionStatus === 'correct' ? 'correct-answer' : 
@@ -661,30 +684,29 @@ const ChronologicGame = () => {
                   ))}
                 </div>
 
-<div className="text-center mb-3 space-x-2">
-  <button 
-    onClick={handleSubmit}
-    className={`border border-black text-black font-bold py-2 px-4 rounded mr-2 ${selectedIds.length === 3 ? 'bg-white hover:bg-gray-100' : 'bg-gray-200 cursor-not-allowed'}`}
-    disabled={selectedIds.length !== 3 || gameWon}
-  >
-    Submit
-  </button>
-  <button 
-    onClick={() => setSelectedIds([])}
-    className={`border border-black text-black font-bold py-2 px-4 rounded mr-2 ${selectedIds.length > 0 ? 'bg-white hover:bg-gray-100' : 'bg-gray-200 cursor-not-allowed'}`}
-    disabled={selectedIds.length === 0 || gameWon}
-  >
-    Deselect All
-  </button>
-  <button 
-    onClick={shuffleNumbers}
-    className="border border-black bg-white hover:bg-gray-100 text-black font-bold py-2 px-4 rounded"
-    disabled={gameWon}
-  >
-    Shuffle
-  </button>
-  
-</div>
+                <div className="text-center mb-3 space-x-2">
+                  <button 
+                    onClick={handleSubmit}
+                    className={`btn ${selectedIds.length === 3 ? 'btn-primary' : 'btn-secondary'}`}
+                    disabled={selectedIds.length !== 3 || gameCompleted}
+                  >
+                    Submit
+                  </button>
+                  <button 
+                    onClick={() => setSelectedIds([])}
+                    className={`btn ${selectedIds.length > 0 ? 'btn-primary' : 'btn-secondary'}`}
+                    disabled={selectedIds.length === 0 || gameCompleted}
+                  >
+                    Deselect All
+                  </button>
+                  <button 
+                    onClick={shuffleNumbers}
+                    className="btn btn-primary"
+                    disabled={gameCompleted}
+                  >
+                    Shuffle
+                  </button>
+                </div>
 
                 <div className="correct-guesses">
                   {correctGuesses.map((guess, index) => (
@@ -695,13 +717,15 @@ const ChronologicGame = () => {
                   ))}
                 </div>
 
-                {renderNavigationButtons()}<p></p>
+                {renderNavigationButtons()}
+                <p className="text-center mt-2">
+                  Time: {formatTime(Date.now() - startTime)}
+                </p>
               </>
             )
           ) : null}
         </div>
         
-
         <MenuOverlay 
           isOpen={isMenuOpen} 
           onClose={() => setIsMenuOpen(false)} 
