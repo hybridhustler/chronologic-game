@@ -402,7 +402,7 @@ const ChronologicGame = () => {
       ));
       setSelectedIds([]);
 
-      if (correctGuesses.length + 1 === 4 || totalGuesses + 1 === 3) {
+      if (correctGuesses.length + 1 === 4 || incorrectGuessesLeft === 0) {
         setGameWon(correctGuesses.length + 1 === 4);
         setGameCompleted(true);
         setShowConfetti(correctGuesses.length + 1 === 4);
@@ -649,7 +649,7 @@ const ChronologicGame = () => {
                     </button>
                   </div>
                   <p className="text-xs text-right game-number-display">
-                    #<b>{gameNumber}</b> - Guess: <b>{totalGuesses}/3</b>
+                    #<b>{gameNumber}</b> - Remaining: <b>{incorrectGuessesLeft}/6</b>
                   </p>
                 </div>
                 
